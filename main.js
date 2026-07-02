@@ -59,7 +59,7 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'trayTemplate.png');
+  const iconPath = path.join(__dirname, 'trayIcon.png');
   tray = new Tray(iconPath);
   tray.setToolTip('NoDistraction Pomodoro');
   tray.setTitle('');
