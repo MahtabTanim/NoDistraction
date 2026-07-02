@@ -1,6 +1,7 @@
-import { app, BrowserWindow, Tray, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, Tray, ipcMain, screen, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import https from 'https';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,6 +109,9 @@ app.whenReady().then(() => {
   createTray();
   createWindow();
 
+  // Check for updates after a 3s startup delay
+  setTimeout(checkForUpdates, 3000);
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -137,3 +141,54 @@ ipcMain.on('hide-window', () => {
     mainWindow.hide();
   }
 });
+
+ipcMain.on('open-update-link', (event, url) => {
+  shell.openExternal(url || 'https://github.com/MahtabTanim/NoDistraction/releases');
+});
+
+function checkForUpdates() {
+  const options = {
+    hostname: 'api.github.com',
+    path: '/repos/MahtabTanim/NoDistraction/releases/latest',
+    method: 'GET',
+    headers: {
+      'User-Agent': 'NoDistraction-App'
+    }
+  };
+
+  const req = https.request(options, (res) => {
+    let data = '';
+    res.on('data', (chunk) => { data += chunk; });
+    res.on('end', () => {
+      try {
+        if (res.statusCode === 200) {
+          const release = JSON.parse(data);
+          const latestVersion = release.tag_name;
+          const currentVersion = `v${app.getVersion()}`;
+          
+          if (latestVersion && latestVersion !== currentVersion) {
+            const sendUpdateInfo = () => {
+              if (mainWindow && !mainWindow.webContents.isLoading()) {
+                mainWindow.webContents.send('update-available', {
+                  version: latestVersion,
+                  url: release.html_url
+                });
+              } else {
+                setTimeout(sendUpdateInfo, 1000);
+              }
+            };
+            sendUpdateInfo();
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing update response:', err);
+      }
+    });
+  });
+
+  req.on('error', (err) => {
+    console.error('Update check failed:', err);
+  });
+
+  req.end();
+}

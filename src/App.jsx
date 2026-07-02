@@ -40,6 +40,16 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [activationCompleted, setActivationCompleted] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState(null);
+
+  // Listen for update-available IPC notifications on mount
+  useEffect(() => {
+    if (window.api && window.api.onUpdateAvailable) {
+      window.api.onUpdateAvailable((info) => {
+        setUpdateInfo(info);
+      });
+    }
+  }, []);
 
   // Synchronize history count today
   useEffect(() => {
@@ -222,6 +232,61 @@ export default function App() {
 
       {/* Main Screen Router */}
       <div className="scrollable-content">
+        {screen === 'SETUP' && updateInfo && (
+          <div className="update-banner-card" style={{
+            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            animation: 'fadeIn 0.5s ease'
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-accent-break)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'var(--color-accent-break)', borderRadius: '50%' }}></span>
+                Update Available!
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                Version {updateInfo.version} is ready to download.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => window.api.openUpdateLink(updateInfo.url)}
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-accent-break), #0d9488)',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px var(--color-accent-break-glow)'
+                }}
+              >
+                Get
+              </button>
+              <button
+                onClick={() => setUpdateInfo(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {screen === 'SETUP' && (
           <SetupForm initialData={lastConfig} onSubmit={handleStartSession} />
         )}

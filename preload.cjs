@@ -4,4 +4,6 @@ contextBridge.exposeInMainWorld('api', {
   updateTrayTitle: (title) => ipcRenderer.send('update-tray-title', title),
   quitApp: () => ipcRenderer.send('quit-app'),
   hideWindow: () => ipcRenderer.send('hide-window'),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (event, data) => callback(data)),
+  openUpdateLink: (url) => ipcRenderer.send('open-update-link', url),
 });
