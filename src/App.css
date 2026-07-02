@@ -22,6 +22,7 @@ body.dark-mode {
   --bg-app: #0d0d11;
   --bg-card: rgba(25, 25, 35, 0.65);
   --bg-input: rgba(35, 35, 48, 0.5);
+  --bg-input-focus: rgba(35, 35, 48, 0.7);
   --border-glow: rgba(255, 255, 255, 0.08);
   --border-focus: rgba(255, 87, 51, 0.4);
   --color-text-main: #f3f4f6;
@@ -34,7 +35,8 @@ body.dark-mode {
 body.light-mode {
   --bg-app: #f4f4f7;
   --bg-card: rgba(255, 255, 255, 0.75);
-  --bg-input: rgba(230, 230, 235, 0.7);
+  --bg-input: rgba(225, 225, 230, 0.65);
+  --bg-input-focus: rgba(255, 255, 255, 0.95);
   --border-glow: rgba(0, 0, 0, 0.06);
   --border-focus: rgba(255, 87, 51, 0.65);
   --color-text-main: #1f2937; /* Neutral 800 */
@@ -143,7 +145,22 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+/* Remove ugly default browser outlines */
+.icon-btn:focus,
+.icon-btn:focus-visible,
+button:focus,
+button:focus-visible,
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+[role="button"]:focus,
+[role="button"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .icon-btn {
@@ -191,34 +208,37 @@ body {
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .form-group label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text-muted);
 }
 
 .form-input {
   background-color: var(--bg-input);
-  border: 1px solid var(--border-glow);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border: none;
+  border-bottom: 1.5px solid var(--border-glow);
+  border-radius: 6px;
+  padding: 8px 10px;
   color: var(--color-text-main);
   font-family: var(--font-body);
   font-size: 13px;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .form-input:focus {
-  border-color: var(--border-focus);
+  background-color: var(--bg-input-focus);
+  border-bottom: 1.5px solid var(--color-accent-work);
+  box-shadow: 0 4px 12px rgba(255, 87, 51, 0.04);
 }
 
 .textarea-input {
@@ -230,33 +250,40 @@ body {
 .pill-rating-container {
   display: flex;
   justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
 }
 
 .pill-rating-btn {
-  flex: 1;
+  width: 28px;
+  height: 28px;
   background-color: var(--bg-input);
-  border: 1px solid var(--border-glow);
+  border: none;
   color: var(--color-text-muted);
-  border-radius: 8px;
-  padding: 8px 0;
+  border-radius: 50%;
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
 }
 
 .pill-rating-btn:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.06);
   color: var(--color-text-main);
 }
 
+body.light-mode .pill-rating-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 .pill-rating-btn.active {
-  background-color: var(--color-accent-work);
-  border-color: var(--color-accent-work);
+  background: linear-gradient(135deg, var(--color-accent-work), #e64a19);
   color: #fff;
-  box-shadow: 0 4px 12px var(--color-accent-work-glow);
+  font-weight: 600;
+  box-shadow: 0 2px 8px var(--color-accent-work-glow);
 }
 
 /* Distraction Tag Selector */
@@ -268,33 +295,38 @@ body {
 
 .tag-btn {
   background-color: var(--bg-input);
-  border: 1px solid var(--border-glow);
+  border: none;
   color: var(--color-text-muted);
   border-radius: 16px;
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tag-btn:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.06);
   color: var(--color-text-main);
 }
 
+body.light-mode .tag-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 .tag-btn.active {
-  background-color: var(--color-warning);
-  border-color: var(--color-warning);
-  color: #000;
-  font-weight: 500;
-  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
+  background-color: var(--bg-input-focus);
+  color: var(--color-text-main);
+  border-bottom: 2px solid var(--color-accent-work);
+  border-radius: 12px 12px 6px 6px;
 }
 
 .tag-btn.active.none-tag {
-  background-color: var(--color-accent-break);
-  border-color: var(--color-accent-break);
+  background: linear-gradient(135deg, var(--color-accent-break), #0d9488);
   color: #fff;
-  box-shadow: 0 4px 10px var(--color-accent-break-glow);
+  border-bottom: none;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px var(--color-accent-break-glow);
 }
 
 /* Slider Controls */

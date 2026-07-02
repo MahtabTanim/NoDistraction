@@ -45,7 +45,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 1. Outcome */}
       <div className="form-group">
-        <label>1. What will be the outcome of the session?</label>
+        <label>What is the target outcome of this session?</label>
         <input
           type="text"
           value={formData.outcome}
@@ -58,7 +58,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 2. Workspace Rating */}
       <div className="form-group">
-        <label>2. Rate your place of work (1 - 10)</label>
+        <label>Rate your current place of work</label>
         <div className="pill-rating-container">
           {[...Array(10)].map((_, i) => {
             const val = i + 1;
@@ -78,7 +78,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 3. Distractions */}
       <div className="form-group">
-        <label>3. Is there any active distraction?</label>
+        <label>Is there any active distraction?</label>
         <div className="tag-container">
           {DISTRACTION_OPTIONS.map((opt) => (
             <button
@@ -97,7 +97,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 4. Activation Ritual */}
       <div className="form-group">
-        <label>4. What is your activation ritual?</label>
+        <label>What is your activation ritual?</label>
         <input
           type="text"
           value={formData.activationRitual}
@@ -109,7 +109,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 6 (skip 5 as per user requirements). Energy Rating */}
       <div className="form-group">
-        <label>5. How energized are you? (1 - 10)</label>
+        <label>How energized are you?</label>
         <div className="pill-rating-container">
           {[...Array(10)].map((_, i) => {
             const val = i + 1;
@@ -129,7 +129,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 6. Things Not To Do */}
       <div className="form-group">
-        <label>6. Things NOT to do in this session</label>
+        <label>Things not to do in this session</label>
         <input
           type="text"
           value={formData.thingsNotToDo}
@@ -141,7 +141,7 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 7. Closing Ritual */}
       <div className="form-group">
-        <label>7. Closing ritual steps (separated by commas)</label>
+        <label>Closing ritual steps (comma-separated)</label>
         <textarea
           value={formData.closingRitual}
           onChange={(e) => setFormData((prev) => ({ ...prev, closingRitual: e.target.value }))}
@@ -153,7 +153,7 @@ export default function SetupForm({ initialData, onSubmit }) {
       {/* 8. Session Time */}
       <div className="form-group slider-group">
         <div className="slider-header">
-          <label>8. Session Duration</label>
+          <label>Session Duration</label>
           <span className="slider-val">{formData.duration} mins</span>
         </div>
         <input
@@ -172,7 +172,7 @@ export default function SetupForm({ initialData, onSubmit }) {
       {/* 9. Expected Break */}
       <div className="form-group slider-group">
         <div className="slider-header">
-          <label>9. Expected Break Duration</label>
+          <label>Expected Break Duration</label>
           <span className="slider-val">{formData.breakDuration} mins</span>
         </div>
         <input
