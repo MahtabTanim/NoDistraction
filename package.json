@@ -1,9 +1,12 @@
 {
   "name": "nodistraction",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
   "main": "main.js",
+  "description": "A distraction-free, customizable macOS menu bar Pomodoro focus timer.",
+  "author": "Mahtab Tanim",
+  "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
