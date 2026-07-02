@@ -9,7 +9,8 @@
     "dev:vite": "vite",
     "dev:electron": "electron .",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "package": "npm run build && electron-builder"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",
@@ -22,7 +23,30 @@
     "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^9.2.3",
     "electron": "^41.7.1",
+    "electron-builder": "^26.15.3",
     "oxlint": "^1.71.0",
     "vite": "^8.1.1"
+  },
+  "build": {
+    "appId": "com.nodistraction.pomodoro",
+    "productName": "NoDistraction",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ],
+      "icon": "icons/icons8-year-of-tiger-512.png"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.cjs",
+      "trayIcon.png",
+      "trayIcon@2x.png",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    }
   }
 }
