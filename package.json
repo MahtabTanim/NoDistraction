@@ -12,7 +12,6 @@
     "dev:vite": "vite",
     "dev:electron": "electron .",
     "build": "vite build",
-    "preview": "vite preview",
     "package": "npm run build && electron-builder --publish never"
   },
   "dependencies": {

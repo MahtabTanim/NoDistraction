@@ -35,6 +35,5 @@ jobs:
         with:
           files: |
             release/NoDistraction-*.dmg
-            release/NoDistraction-*.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

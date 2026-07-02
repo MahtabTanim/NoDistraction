@@ -1,5 +1,10 @@
 # NoDistraction 🎯
 
+<p align="center">
+  <img src="screenshots/app.png" width="340" alt="NoDistraction App Interface" />
+  <img src="screenshots/update.png" width="340" alt="NoDistraction Update Notification" />
+</p>
+
 A premium, distraction-free macOS menu bar Pomodoro focus timer that helps you run highly intentional, customizable work sessions and restful breaks.
 
 Unlike traditional Pomodoro timers that enforce rigid 25-minute intervals, **NoDistraction** treats every session individually. You configure the target outcome, specify what *not* to do, choose a custom duration, and commit to an activation ritual before the clock starts ticking.
@@ -27,10 +32,19 @@ Unlike traditional Pomodoro timers that enforce rigid 25-minute intervals, **NoD
 
 ---
 
-## Installation
+## Installation & Setup
 
-You can download the latest standalone native application installer from our Releases page:
-* **`NoDistraction-0.0.0-arm64.dmg`**: Double-click and drag `NoDistraction.app` to your Applications folder.
+1. Download the latest installer DMG from the **[GitHub Releases Page](https://github.com/MahtabTanim/NoDistraction/releases)** (or download the latest release directly via **[this static link](https://github.com/MahtabTanim/NoDistraction/releases/latest/download/NoDistraction-0.0.0-arm64.dmg)**).
+2. Double-click the `.dmg` file and drag **NoDistraction** to your **Applications** folder.
+
+### macOS Security / Gatekeeper Note
+Because this app is free and open-source, it is not code-signed with a paid Apple Developer certificate. When you run it for the first time, macOS might display a warning saying *"NoDistraction is damaged and can't be opened"* or block it as an unsigned app.
+
+To unblock the app, run this command in your **Terminal**:
+```bash
+xattr -cr /Applications/NoDistraction.app
+```
+After running this, the app will launch cleanly!
 
 ---
 
