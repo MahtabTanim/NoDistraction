@@ -438,7 +438,6 @@ body.light-mode .tag-btn:hover {
 
 .timer-ring-progress {
   stroke-dasharray: 565.48; /* 2 * PI * 90 */
-  stroke-dashoffset: 0;
   transition: stroke-dashoffset 1s linear;
 }
 
@@ -459,8 +458,8 @@ body.light-mode .tag-btn:hover {
 
 .timer-digits {
   font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: 300;
+  font-size: 46px;
+  font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--color-text-main);
 }
@@ -473,22 +472,30 @@ body.light-mode .tag-btn:hover {
   color: var(--color-text-muted);
 }
 
+/* Light Mode Ring Bg Contrast */
+body.light-mode .timer-ring-bg {
+  stroke: rgba(0, 0, 0, 0.05);
+}
+
 /* Goal Context Display */
 .goal-context-card {
   width: 100%;
   background-color: var(--bg-card);
   border: 1px solid var(--border-glow);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  align-items: flex-start;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.context-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+.goal-context-card.target-outcome {
+  border-left: 3px solid var(--color-accent-work);
+}
+
+.goal-context-card.avoid-list {
+  border-left: 3px solid var(--color-warning);
 }
 
 .context-title {
@@ -503,60 +510,71 @@ body.light-mode .tag-btn:hover {
   font-size: 13px;
   color: var(--color-text-main);
   line-height: 1.4;
+  margin-top: 2px;
 }
 
-.warning-banner {
-  border-left: 3px solid var(--color-warning);
+/* Checklist styling for Activation and Avoid lists */
+.goal-context-card.activation-checklist {
+  border-left: 3px solid var(--color-accent-break);
 }
 
-/* Activation Ritual Card */
-.activation-card {
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
-  background-color: rgba(255, 87, 51, 0.05);
-  border: 1px dashed rgba(255, 87, 51, 0.25);
-  border-radius: 12px;
-  padding: 12px 16px;
+}
+
+.checklist-item {
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  padding: 6px 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  width: fit-content;
 }
 
-.activation-card:hover {
-  background-color: rgba(255, 87, 51, 0.08);
+.checklist-item .item-text {
+  font-size: 13px;
+  color: var(--color-text-main);
+  transition: all 0.2s ease;
 }
 
-.activation-card.checked {
-  background-color: rgba(16, 185, 129, 0.05);
-  border-color: rgba(16, 185, 129, 0.25);
+.checklist-item.checked .item-text {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+  opacity: 0.65;
 }
 
 .checkbox-visual {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1.5px solid var(--color-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.activation-card.checked .checkbox-visual {
+/* Activation checklist checkbox visuals */
+.checklist-item.checked .checkbox-visual {
   background-color: var(--color-accent-break);
   border-color: var(--color-accent-break);
 }
 
-.activation-text {
-  font-size: 13px;
-  color: var(--color-text-main);
+/* Warning checklist checkbox visuals */
+.checkbox-visual.warning {
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
-.activation-card.checked .activation-text {
-  text-decoration: line-through;
-  color: var(--color-text-muted);
+.checklist-item.checked .checkbox-visual.warning {
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+  color: #0d0d11; /* Dark checkmark on gold badge for high contrast */
 }
 
 /* Timer Controls */

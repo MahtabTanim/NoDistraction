@@ -59,7 +59,7 @@ export default function BreakTimer({ timeLeft, duration, onSkip }) {
             strokeLinecap="round"
             fill="none"
             strokeDasharray="565.48"
-            strokeDashoffset={strokeDashoffset}
+            style={{ strokeDashoffset }}
           />
         </svg>
         <div className="timer-digits-container">

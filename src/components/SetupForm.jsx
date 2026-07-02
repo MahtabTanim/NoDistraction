@@ -97,13 +97,13 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 4. Activation Ritual */}
       <div className="form-group">
-        <label>What is your activation ritual?</label>
+        <label>What is your activation ritual? (comma-separated)</label>
         <input
           type="text"
           value={formData.activationRitual}
           onChange={(e) => setFormData((prev) => ({ ...prev, activationRitual: e.target.value }))}
           className="form-input"
-          placeholder="e.g. Put phone in drawer, take 3 deep breaths"
+          placeholder="e.g. Hide phone, clean desk, take deep breaths"
         />
       </div>
 
@@ -129,13 +129,13 @@ export default function SetupForm({ initialData, onSubmit }) {
 
       {/* 6. Things Not To Do */}
       <div className="form-group">
-        <label>Things not to do in this session</label>
+        <label>Things not to do in this session (comma-separated)</label>
         <input
           type="text"
           value={formData.thingsNotToDo}
           onChange={(e) => setFormData((prev) => ({ ...prev, thingsNotToDo: e.target.value }))}
           className="form-input"
-          placeholder="e.g. No Twitter, no email checks, no phone"
+          placeholder="e.g. Twitter, Phone, Email"
         />
       </div>
 

@@ -47,7 +47,8 @@ export default function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [activationCompleted, setActivationCompleted] = useState(false);
+  const [completedActivationItems, setCompletedActivationItems] = useState([]);
+  const [completedAvoidItems, setCompletedAvoidItems] = useState([]);
   const [updateInfo, setUpdateInfo] = useState(null);
 
   // Apply theme to document body and persist
@@ -119,8 +120,21 @@ export default function App() {
     setActiveSession(config);
     setTimeLeft(config.duration * 60);
     setIsPaused(false);
-    setActivationCompleted(false);
+    setCompletedActivationItems([]);
+    setCompletedAvoidItems([]);
     setScreen('ACTIVE');
+  };
+
+  const handleToggleActivationItem = (item) => {
+    setCompletedActivationItems((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+  };
+
+  const handleToggleAvoidItem = (item) => {
+    setCompletedAvoidItems((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
   };
 
   // Active Focus timer reaches 0
@@ -323,8 +337,10 @@ export default function App() {
             isPaused={isPaused}
             onTogglePause={() => setIsPaused(!isPaused)}
             onCancel={handleCancelSession}
-            activationCompleted={activationCompleted}
-            onToggleActivation={() => setActivationCompleted(!activationCompleted)}
+            completedActivationItems={completedActivationItems}
+            onToggleActivationItem={handleToggleActivationItem}
+            completedAvoidItems={completedAvoidItems}
+            onToggleAvoidItem={handleToggleAvoidItem}
           />
         )}
 
