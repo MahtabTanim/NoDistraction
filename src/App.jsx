@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, Settings, X, LogIn } from 'lucide-react';
+import { History, Settings, X, LogIn, Sun, Moon } from 'lucide-react';
 
 // Utilities
 import { startAlarm, stopAlarm, playPreview } from './utils/audio';
@@ -23,11 +23,19 @@ import BreakTimer from './components/BreakTimer';
 import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
 
+const getInitialTheme = () => {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark' || saved === 'light') return saved;
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return prefersDark ? 'dark' : 'light';
+};
+
 export default function App() {
   // Navigation & Sub-panels state
   const [screen, setScreen] = useState('SETUP'); // 'SETUP' | 'ACTIVE' | 'CLOSING' | 'BREAK'
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme());
 
   // App-wide configurations
   const [settings, setSettings] = useState(getSettings());
@@ -41,6 +49,13 @@ export default function App() {
   const [isPaused, setIsPaused] = useState(false);
   const [activationCompleted, setActivationCompleted] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
+
+  // Apply theme to document body and persist
+  useEffect(() => {
+    document.body.classList.remove('dark-mode', 'light-mode');
+    document.body.classList.add(`${theme}-mode`);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   // Listen for update-available IPC notifications on mount
   useEffect(() => {
@@ -201,6 +216,13 @@ export default function App() {
         <div className="header-actions">
           {screen === 'SETUP' && (
             <>
+              <button
+                className="icon-btn"
+                onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+                title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
               <button
                 className={`icon-btn ${isHistoryOpen ? 'active' : ''}`}
                 onClick={() => {

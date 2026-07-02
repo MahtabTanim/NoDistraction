@@ -2,19 +2,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Colors */
-  --bg-app: #0d0d11;
-  --bg-card: rgba(25, 25, 35, 0.65);
-  --bg-input: rgba(35, 35, 48, 0.5);
-  --border-glow: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(255, 87, 51, 0.4);
-  
+  /* Constant colors */
   --color-accent-work: #ff5733; /* Vivid Coral */
   --color-accent-work-glow: rgba(255, 87, 51, 0.35);
   --color-accent-break: #10b981; /* Restful Emerald */
   --color-accent-break-glow: rgba(16, 185, 129, 0.35);
-  --color-text-main: #f3f4f6;
-  --color-text-muted: #9ca3af;
   --color-warning: #f59e0b; /* Amber Distraction Warning */
   
   /* Fonts */
@@ -24,6 +16,55 @@
   /* Layout */
   --width-panel: 360px;
   --height-panel: 816px;
+}
+
+body.dark-mode {
+  --bg-app: #0d0d11;
+  --bg-card: rgba(25, 25, 35, 0.65);
+  --bg-input: rgba(35, 35, 48, 0.5);
+  --border-glow: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(255, 87, 51, 0.4);
+  --color-text-main: #f3f4f6;
+  --color-text-muted: #9ca3af;
+  --bg-header: rgba(18, 18, 24, 0.8);
+  --bg-overlay-header: rgba(18, 18, 24, 0.4);
+  --shadow-app: 0 20px 40px rgba(0, 0, 0, 0.7);
+}
+
+body.light-mode {
+  --bg-app: #f4f4f7;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-input: rgba(230, 230, 235, 0.7);
+  --border-glow: rgba(0, 0, 0, 0.06);
+  --border-focus: rgba(255, 87, 51, 0.65);
+  --color-text-main: #1f2937; /* Neutral 800 */
+  --color-text-muted: #5b6270; /* Neutral 600 */
+  --bg-header: rgba(255, 255, 255, 0.85);
+  --bg-overlay-header: rgba(240, 240, 245, 0.6);
+  --shadow-app: 0 20px 45px rgba(0, 0, 0, 0.1);
+}
+
+/* Global Fading transitions */
+body,
+.app-container,
+.app-header,
+.scrollable-content,
+.overlay-panel,
+.overlay-header,
+.icon-btn,
+button,
+input,
+textarea,
+select,
+label,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+div {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 * {
@@ -61,7 +102,7 @@ body {
   border: 1px solid var(--border-glow);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+  box-shadow: var(--shadow-app);
 }
 
 /* Header */
@@ -71,7 +112,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: rgba(18, 18, 24, 0.8);
+  background: var(--bg-header);
   border-bottom: 1px solid var(--border-glow);
   backdrop-filter: blur(8px);
   z-index: 5;
@@ -710,7 +751,7 @@ body {
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--border-glow);
-  background: rgba(18, 18, 24, 0.4);
+  background: var(--bg-overlay-header);
 }
 
 .overlay-title {
