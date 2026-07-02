@@ -13,7 +13,7 @@
     "dev:electron": "electron .",
     "build": "vite build",
     "preview": "vite preview",
-    "package": "npm run build && electron-builder"
+    "package": "npm run build && electron-builder --publish never"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",
