@@ -21,87 +21,67 @@ const DEFAULT_CONFIG = {
   closingRitual: 'Clean desk, stretch, drink water',
 };
 
-export const getSettings = () => {
+const safeRead = (key, fallback = null) => {
   try {
-    const data = localStorage.getItem(KEYS.SETTINGS);
-    return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : fallback;
   } catch (err) {
-    console.error('Error reading settings:', err);
-    return DEFAULT_SETTINGS;
+    console.error(`Error reading ${key}:`, err);
+    return fallback;
   }
+};
+
+const safeWrite = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (err) {
+    console.error(`Error saving ${key}:`, err);
+  }
+};
+
+export const getSettings = () => {
+  const data = safeRead(KEYS.SETTINGS, {});
+  return { ...DEFAULT_SETTINGS, ...data };
 };
 
 export const saveSettings = (settings) => {
-  try {
-    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
-  } catch (err) {
-    console.error('Error saving settings:', err);
-  }
+  safeWrite(KEYS.SETTINGS, settings);
 };
 
 export const getHistory = () => {
-  try {
-    const data = localStorage.getItem(KEYS.HISTORY);
-    return data ? JSON.parse(data) : [];
-  } catch (err) {
-    console.error('Error reading history:', err);
-    return [];
-  }
+  return safeRead(KEYS.HISTORY, []);
 };
 
 export const saveSession = (session) => {
-  try {
-    const history = getHistory();
-    const newSession = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      ...session,
-    };
-    history.unshift(newSession);
-    localStorage.setItem(KEYS.HISTORY, JSON.stringify(history));
-    return newSession;
-  } catch (err) {
-    console.error('Error saving session:', err);
-    return null;
-  }
+  const history = getHistory();
+  const newSession = {
+    id: Date.now().toString(),
+    timestamp: new Date().toISOString(),
+    ...session,
+  };
+  history.unshift(newSession);
+  safeWrite(KEYS.HISTORY, history);
+  return newSession;
 };
 
 export const deleteSession = (id) => {
-  try {
-    const history = getHistory();
-    const updated = history.filter((item) => item.id !== id);
-    localStorage.setItem(KEYS.HISTORY, JSON.stringify(updated));
-    return updated;
-  } catch (err) {
-    console.error('Error deleting session:', err);
-    return getHistory();
-  }
+  const history = getHistory();
+  const updated = history.filter((item) => item.id !== id);
+  safeWrite(KEYS.HISTORY, updated);
+  return updated;
 };
 
 export const clearHistory = () => {
-  try {
-    localStorage.setItem(KEYS.HISTORY, JSON.stringify([]));
-  } catch (err) {
-    console.error('Error clearing history:', err);
-  }
+  safeWrite(KEYS.HISTORY, []);
 };
 
 export const getLastSessionConfig = () => {
-  try {
-    const data = localStorage.getItem(KEYS.LAST_CONFIG);
-    return data ? { ...DEFAULT_CONFIG, ...JSON.parse(data) } : DEFAULT_CONFIG;
-  } catch (err) {
-    console.error('Error reading last config:', err);
-    return DEFAULT_CONFIG;
-  }
+  const data = safeRead(KEYS.LAST_CONFIG, {});
+  return { ...DEFAULT_CONFIG, ...data };
 };
 
 export const saveLastSessionConfig = (config) => {
-  try {
-    localStorage.setItem(KEYS.LAST_CONFIG, JSON.stringify(config));
-  } catch (err) {
-    console.error('Error saving last config:', err);
-  }
+  safeWrite(KEYS.LAST_CONFIG, config);
 };
 
 export const getCompletedTodayCount = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, X, AlertTriangle, Target, Check, Sparkles } from 'lucide-react';
+import { Play, Pause, X, AlertTriangle, Target, Check } from 'lucide-react';
 
 export default function Timer({
   timeLeft,

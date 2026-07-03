@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { History, Settings, X, LogIn, Sun, Moon } from 'lucide-react';
+import { History, Settings, X, Sun, Moon } from 'lucide-react';
 
 // Utilities
 import { startAlarm, stopAlarm, playPreview } from './utils/audio';

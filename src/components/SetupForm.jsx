@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Sparkles } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 const DISTRACTION_OPTIONS = ['Phone', 'Noise', 'Internet', 'Other', 'None'];
 
@@ -30,6 +30,24 @@ export default function SetupForm({ initialData, onSubmit }) {
     });
   };
 
+  const renderRatingPills = (field, currentValue) => (
+    <div className="pill-rating-container">
+      {[...Array(10)].map((_, i) => {
+        const val = i + 1;
+        return (
+          <button
+            key={val}
+            type="button"
+            className={`pill-rating-btn ${currentValue === val ? 'active' : ''}`}
+            onClick={() => handleRatingClick(field, val)}
+          >
+            {val}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.outcome.trim()) {
@@ -59,21 +77,7 @@ export default function SetupForm({ initialData, onSubmit }) {
       {/* 2. Workspace Rating */}
       <div className="form-group">
         <label>Rate your current place of work</label>
-        <div className="pill-rating-container">
-          {[...Array(10)].map((_, i) => {
-            const val = i + 1;
-            return (
-              <button
-                key={val}
-                type="button"
-                className={`pill-rating-btn ${formData.workspaceRating === val ? 'active' : ''}`}
-                onClick={() => handleRatingClick('workspaceRating', val)}
-              >
-                {val}
-              </button>
-            );
-          })}
-        </div>
+        {renderRatingPills('workspaceRating', formData.workspaceRating)}
       </div>
 
       {/* 3. Distractions */}
@@ -110,21 +114,7 @@ export default function SetupForm({ initialData, onSubmit }) {
       {/* 6 (skip 5 as per user requirements). Energy Rating */}
       <div className="form-group">
         <label>How energized are you?</label>
-        <div className="pill-rating-container">
-          {[...Array(10)].map((_, i) => {
-            const val = i + 1;
-            return (
-              <button
-                key={val}
-                type="button"
-                className={`pill-rating-btn ${formData.energyRating === val ? 'active' : ''}`}
-                onClick={() => handleRatingClick('energyRating', val)}
-              >
-                {val}
-              </button>
-            );
-          })}
-        </div>
+        {renderRatingPills('energyRating', formData.energyRating)}
       </div>
 
       {/* 6. Things Not To Do */}

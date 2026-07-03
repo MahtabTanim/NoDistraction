@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Trash2, Calendar, MapPin, Zap, AlertTriangle, ShieldAlert, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Trash2, Calendar, MapPin, Zap, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem }) {
   const [expandedId, setExpandedId] = useState(null);

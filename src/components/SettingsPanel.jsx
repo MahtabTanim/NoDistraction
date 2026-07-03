@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Play, Power, Trash2, Volume2, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Power, Trash2, Volume2 } from 'lucide-react';
 import { playPreview } from '../utils/audio';
 
 export default function SettingsPanel({
