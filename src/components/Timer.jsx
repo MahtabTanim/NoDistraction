@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, X, AlertTriangle, Target, Check } from 'lucide-react';
+import { Play, Pause, X, AlertTriangle, Target, Check, Sparkles } from 'lucide-react';
 
 export default function Timer({
   timeLeft,
@@ -14,6 +14,8 @@ export default function Timer({
   onToggleActivationItem,
   completedAvoidItems,
   onToggleAvoidItem,
+  completedOutcomes,
+  onToggleOutcome,
 }) {
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
@@ -32,6 +34,10 @@ export default function Timer({
 
   const avoidItems = thingsNotToDo
     ? thingsNotToDo.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const outcomeItems = outcome
+    ? outcome.split(',').map((s) => s.trim()).filter(Boolean)
     : [];
 
   return (
@@ -72,9 +78,9 @@ export default function Timer({
         {activationItems.length > 0 && (
           <div className="goal-context-card activation-checklist">
             <div style={{ width: '100%' }}>
-              <span className="context-title" style={{ fontSize: '9px', display: 'block', marginBottom: '8px' }}>
-                Activation Ritual
-              </span>
+              <div className="context-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '9px', marginBottom: '8px' }}>
+                <Sparkles size={12} /> Activation Ritual
+              </div>
               <div className="checklist-items">
                 {activationItems.map((item, idx) => {
                   const isDone = completedActivationItems.includes(item);
@@ -96,43 +102,57 @@ export default function Timer({
           </div>
         )}
 
-        {/* Target Outcome Card */}
-        <div className="goal-context-card target-outcome">
-          <Target size={16} style={{ color: 'var(--color-accent-work)', marginTop: '2px' }} />
-          <div style={{ flex: 1 }}>
-            <span className="context-title" style={{ fontSize: '9px', display: 'block', marginBottom: '2px' }}>
-              Target Outcome
-            </span>
-            <div className="context-val">{outcome}</div>
+        {/* Target Outcomes Card */}
+        {outcomeItems.length > 0 && (
+          <div className="goal-context-card target-outcome">
+            <div style={{ width: '100%' }}>
+              <div className="context-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '9px', marginBottom: '8px', color: 'var(--color-accent-work)' }}>
+                <Target size={12} /> Target Outcomes
+              </div>
+              <div className="checklist-items">
+                {outcomeItems.map((item, idx) => {
+                  const isDone = completedOutcomes.includes(item);
+                  return (
+                    <div
+                      key={idx}
+                      className={`checklist-item ${isDone ? 'checked' : ''}`}
+                      onClick={() => onToggleOutcome(item)}
+                    >
+                      <div className="checkbox-visual">
+                        {isDone && <Check size={12} strokeWidth={3} />}
+                      </div>
+                      <span className="item-text">{item}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Things NOT to do Card */}
         {avoidItems.length > 0 && (
           <div className="goal-context-card avoid-list">
-            <div style={{ width: '100%', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <AlertTriangle size={16} style={{ color: 'var(--color-warning)', marginTop: '2px' }} />
-              <div style={{ flex: 1 }}>
-                <span className="context-title" style={{ fontSize: '9px', display: 'block', marginBottom: '8px', color: 'var(--color-warning)' }}>
-                  Things to avoid
-                </span>
-                <div className="checklist-items">
-                  {avoidItems.map((item, idx) => {
-                    const isDone = completedAvoidItems.includes(item);
-                    return (
-                      <div
-                        key={idx}
-                        className={`checklist-item avoid ${isDone ? 'checked' : ''}`}
-                        onClick={() => onToggleAvoidItem(item)}
-                      >
-                        <div className="checkbox-visual warning">
-                          {isDone && <Check size={12} strokeWidth={3} />}
-                        </div>
-                        <span className="item-text">{item}</span>
+            <div style={{ width: '100%' }}>
+              <div className="context-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '9px', marginBottom: '8px', color: 'var(--color-warning)' }}>
+                <AlertTriangle size={12} /> Things to avoid
+              </div>
+              <div className="checklist-items">
+                {avoidItems.map((item, idx) => {
+                  const isDone = completedAvoidItems.includes(item);
+                  return (
+                    <div
+                      key={idx}
+                      className={`checklist-item avoid ${isDone ? 'checked' : ''}`}
+                      onClick={() => onToggleAvoidItem(item)}
+                    >
+                      <div className="checkbox-visual warning">
+                        {isDone && <Check size={12} strokeWidth={3} />}
                       </div>
-                    );
-                  })}
-                </div>
+                      <span className="item-text">{item}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

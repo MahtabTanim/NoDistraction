@@ -49,6 +49,7 @@ export default function App() {
   const [isPaused, setIsPaused] = useState(false);
   const [completedActivationItems, setCompletedActivationItems] = useState([]);
   const [completedAvoidItems, setCompletedAvoidItems] = useState([]);
+  const [completedOutcomes, setCompletedOutcomes] = useState([]);
   const [updateInfo, setUpdateInfo] = useState(null);
 
   // Wall-clock end time ref — never freezes when window is hidden
@@ -133,6 +134,7 @@ export default function App() {
     setIsPaused(false);
     setCompletedActivationItems([]);
     setCompletedAvoidItems([]);
+    setCompletedOutcomes([]);
     // Anchor end time to wall clock
     sessionEndTimeRef.current = Date.now() + config.duration * 60 * 1000;
     setScreen('ACTIVE');
@@ -146,6 +148,12 @@ export default function App() {
 
   const handleToggleAvoidItem = (item) => {
     setCompletedAvoidItems((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+  };
+
+  const handleToggleOutcome = (item) => {
+    setCompletedOutcomes((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
     );
   };
@@ -356,6 +364,8 @@ export default function App() {
             onToggleActivationItem={handleToggleActivationItem}
             completedAvoidItems={completedAvoidItems}
             onToggleAvoidItem={handleToggleAvoidItem}
+            completedOutcomes={completedOutcomes}
+            onToggleOutcome={handleToggleOutcome}
           />
         )}
 
