@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { History, Settings, X, LogIn, Sun, Moon } from 'lucide-react';
 
 // Utilities
@@ -51,6 +51,9 @@ export default function App() {
   const [completedAvoidItems, setCompletedAvoidItems] = useState([]);
   const [updateInfo, setUpdateInfo] = useState(null);
 
+  // Wall-clock end time ref — never freezes when window is hidden
+  const sessionEndTimeRef = useRef(null);
+
   // Apply theme to document body and persist
   useEffect(() => {
     document.body.classList.remove('dark-mode', 'light-mode');
@@ -72,26 +75,34 @@ export default function App() {
     setCompletedToday(getCompletedTodayCount());
   }, [history]);
 
-  // Main countdown ticking logic
+  // Main countdown ticking logic — wall-clock anchored so hiding the window never freezes it
   useEffect(() => {
     if (isPaused || (screen !== 'ACTIVE' && screen !== 'BREAK')) {
       return;
     }
 
+    // On every (re)start (new session, resume from pause, screen change),
+    // recalibrate the end time using the current timeLeft so accumulated
+    // paused time is correctly excluded.
+    setTimeLeft((current) => {
+      sessionEndTimeRef.current = Date.now() + current * 1000;
+      return current;
+    });
+
     const timerId = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerId);
-          if (screen === 'ACTIVE') {
-            handleWorkFinished();
-          } else if (screen === 'BREAK') {
-            handleBreakFinished();
-          }
-          return 0;
+      const remaining = Math.round((sessionEndTimeRef.current - Date.now()) / 1000);
+      if (remaining <= 0) {
+        clearInterval(timerId);
+        setTimeLeft(0);
+        if (screen === 'ACTIVE') {
+          handleWorkFinished();
+        } else if (screen === 'BREAK') {
+          handleBreakFinished();
         }
-        return prev - 1;
-      });
-    }, 1000);
+      } else {
+        setTimeLeft(remaining);
+      }
+    }, 500); // Poll every 500ms so re-opening window catches up within half a second
 
     return () => clearInterval(timerId);
   }, [isPaused, screen]);
@@ -122,6 +133,8 @@ export default function App() {
     setIsPaused(false);
     setCompletedActivationItems([]);
     setCompletedAvoidItems([]);
+    // Anchor end time to wall clock
+    sessionEndTimeRef.current = Date.now() + config.duration * 60 * 1000;
     setScreen('ACTIVE');
   };
 
@@ -165,7 +178,9 @@ export default function App() {
     setHistory(getHistory()); // Refresh history logs
 
     // Instantly transition to Break Timer
+    const breakMs = activeSession.breakDuration * 60 * 1000;
     setTimeLeft(activeSession.breakDuration * 60);
+    sessionEndTimeRef.current = Date.now() + breakMs;
     setIsPaused(false);
     setScreen('BREAK');
   };
