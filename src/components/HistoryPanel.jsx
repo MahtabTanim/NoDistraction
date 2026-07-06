@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Trash2, Calendar, MapPin, Zap, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Trash2, Calendar, MapPin, Zap, Sparkles, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem }) {
   const [expandedId, setExpandedId] = useState(null);
@@ -33,7 +33,7 @@ export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem })
   return (
     <div className={`overlay-panel ${isOpen ? 'open' : ''}`}>
       <div className="overlay-header">
-        <button className="icon-btn" onClick={onClose} title="Back">
+        <button className="icon-btn" onClick={onClose} title="Back" aria-label="Back to Timer">
           <ArrowLeft size={16} />
         </button>
         <h3 className="overlay-title">Session History</h3>
@@ -52,8 +52,13 @@ export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem })
               <div key={item.id} className="history-card">
                 <div className="history-card-header" onClick={() => toggleExpand(item.id)}>
                   <div className="history-card-info">
-                    <h4>{item.outcome}</h4>
-                    <span>{formatDate(item.timestamp)} • {item.duration}m</span>
+                    <h4 style={{ color: item.interrupted ? 'var(--color-text-muted)' : 'inherit', textDecoration: item.interrupted ? 'line-through' : 'none' }}>
+                      {item.outcome || 'Untitled Session'}
+                    </h4>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {item.interrupted && <AlertTriangle size={10} style={{ color: 'var(--color-warning)' }} />}
+                      {formatDate(item.timestamp)} • {item.interrupted ? 'Interrupted' : `${item.duration}m`}
+                    </span>
                   </div>
                   <div className="history-card-action">
                     <button
@@ -67,6 +72,7 @@ export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem })
                         }
                       }}
                       title="Delete Entry"
+                      aria-label="Delete Entry"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -76,6 +82,16 @@ export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem })
 
                 {isExpanded && (
                   <div className="history-card-body">
+                    {/* Interruption Reason */}
+                    {item.interrupted && (
+                      <div className="history-detail-group" style={{ marginBottom: '12px' }}>
+                        <span className="history-detail-label" style={{ color: 'var(--color-warning)' }}>Interruption Reason</span>
+                        <span className="history-detail-val" style={{ color: 'var(--color-warning)', fontWeight: 600 }}>
+                          {item.interruptionReason || 'Unknown'}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Ratings */}
                     <div className="history-meta-row">
                       <div className="history-meta-item">

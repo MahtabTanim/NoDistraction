@@ -5,5 +5,9 @@ contextBridge.exposeInMainWorld('api', {
   quitApp: () => ipcRenderer.send('quit-app'),
   hideWindow: () => ipcRenderer.send('hide-window'),
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (event, data) => callback(data)),
+  onGlobalAction: (callback) => {
+    ipcRenderer.removeAllListeners('global-action');
+    ipcRenderer.on('global-action', (event, action) => callback(action));
+  },
   openUpdateLink: (url) => ipcRenderer.send('open-update-link', url),
 });

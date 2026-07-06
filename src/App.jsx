@@ -9,10 +9,12 @@ import {
   getHistory,
   saveSession,
   deleteSession,
-  clearHistory,
   getLastSessionConfig,
   saveLastSessionConfig,
   getCompletedTodayCount,
+  getActiveSessionState,
+  saveActiveSessionState,
+  clearActiveSessionState,
 } from './utils/storage';
 
 // Components
@@ -51,9 +53,16 @@ export default function App() {
   const [completedAvoidItems, setCompletedAvoidItems] = useState([]);
   const [completedOutcomes, setCompletedOutcomes] = useState([]);
   const [updateInfo, setUpdateInfo] = useState(null);
+  const [showInterruptModal, setShowInterruptModal] = useState(false);
 
   // Wall-clock end time ref — never freezes when window is hidden
   const sessionEndTimeRef = useRef(null);
+  
+  // Refs for global shortcuts
+  const screenRef = useRef(screen);
+  const isPausedRef = useRef(isPaused);
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   // Apply theme to document body and persist
   useEffect(() => {
@@ -67,6 +76,56 @@ export default function App() {
     if (window.api && window.api.onUpdateAvailable) {
       window.api.onUpdateAvailable((info) => {
         setUpdateInfo(info);
+      });
+    }
+
+    // Recover active session if exists
+    const savedState = getActiveSessionState();
+    if (savedState) {
+      const { 
+        screen: savedScreen, 
+        activeSession: savedConfig, 
+        endTime, 
+        isPaused: savedIsPaused, 
+        timeLeft: savedTimeLeft,
+        completedActivationItems: savedAct,
+        completedAvoidItems: savedAvoid,
+        completedOutcomes: savedOutcomes 
+      } = savedState;
+      
+      if (endTime > Date.now() || savedIsPaused) {
+        setScreen(savedScreen);
+        setActiveSession(savedConfig);
+        setIsPaused(savedIsPaused);
+        setCompletedActivationItems(savedAct || []);
+        setCompletedAvoidItems(savedAvoid || []);
+        setCompletedOutcomes(savedOutcomes || []);
+        if (savedIsPaused) {
+          setTimeLeft(savedTimeLeft);
+          sessionEndTimeRef.current = Date.now() + savedTimeLeft * 1000;
+        } else {
+          sessionEndTimeRef.current = endTime;
+          setTimeLeft(Math.max(0, Math.round((endTime - Date.now()) / 1000)));
+        }
+      } else {
+        clearActiveSessionState();
+      }
+    }
+
+    // Global action listener (tray menu and shortcuts)
+    if (window.api && window.api.onGlobalAction) {
+      window.api.onGlobalAction((action) => {
+        if (action === 'pause') {
+          if (screenRef.current === 'ACTIVE') setIsPaused(!isPausedRef.current);
+        } else if (action === 'skip') {
+          if (screenRef.current === 'ACTIVE') {
+            setIsPaused(true);
+            setShowInterruptModal(true);
+          } else if (screenRef.current === 'BREAK') {
+            setScreen('SETUP');
+            setActiveSession(null);
+          }
+        }
       });
     }
   }, []);
@@ -123,7 +182,23 @@ export default function App() {
         window.api.updateTrayTitle('');
       }
     }
-  }, [timeLeft, screen]);
+
+    // Persist active session state
+    if (screen === 'ACTIVE' || screen === 'BREAK') {
+      saveActiveSessionState({
+        screen,
+        activeSession,
+        endTime: sessionEndTimeRef.current,
+        isPaused,
+        timeLeft,
+        completedActivationItems,
+        completedAvoidItems,
+        completedOutcomes,
+      });
+    } else {
+      clearActiveSessionState();
+    }
+  }, [timeLeft, screen, isPaused, activeSession, completedActivationItems, completedAvoidItems, completedOutcomes]);
 
   // Session start
   const handleStartSession = (config) => {
@@ -185,11 +260,22 @@ export default function App() {
     saveSession(sessionRecord);
     setHistory(getHistory()); // Refresh history logs
 
+    // Determine break duration (long break vs normal break)
+    const newCompletedCount = completedToday + 1;
+    let actualBreakDuration = activeSession.breakDuration;
+    let isLongBreak = false;
+    if (settings.longBreakInterval > 0 && newCompletedCount % settings.longBreakInterval === 0) {
+      actualBreakDuration = settings.longBreakDuration;
+      isLongBreak = true;
+    }
+
     // Instantly transition to Break Timer
-    const breakMs = activeSession.breakDuration * 60 * 1000;
-    setTimeLeft(activeSession.breakDuration * 60);
+    const breakMs = actualBreakDuration * 60 * 1000;
+    setTimeLeft(actualBreakDuration * 60);
     sessionEndTimeRef.current = Date.now() + breakMs;
     setIsPaused(false);
+    // Pass isLongBreak to activeSession to display it on break screen if needed, though activeSession holds original config.
+    setActiveSession(prev => ({ ...prev, actualBreakDuration, isLongBreak }));
     setScreen('BREAK');
   };
 
@@ -197,15 +283,45 @@ export default function App() {
   const handleBreakFinished = () => {
     // Play a friendly finish chime
     playPreview(settings.soundType);
+    if (settings.autoTransitions) {
+      handleStartSession(lastConfig); // Automatically start next session
+    } else {
+      setScreen('SETUP');
+      setActiveSession(null);
+    }
+  };
+
+  const handleCancelSession = () => {
+    setIsPaused(true);
+    setShowInterruptModal(true);
+  };
+
+  const submitInterruption = (reason) => {
+    const sessionRecord = {
+      outcome: activeSession.outcome,
+      workspaceRating: activeSession.workspaceRating,
+      distractions: activeSession.distractions,
+      activationRitual: activeSession.activationRitual,
+      energyRating: activeSession.energyRating,
+      duration: activeSession.duration,
+      breakDuration: activeSession.breakDuration,
+      thingsNotToDo: activeSession.thingsNotToDo,
+      closingRitual: activeSession.closingRitual,
+      closingRitualCompleted: false,
+      interrupted: true,
+      interruptionReason: reason,
+    };
+    saveSession(sessionRecord);
+    setHistory(getHistory());
+    
+    setShowInterruptModal(false);
     setScreen('SETUP');
     setActiveSession(null);
   };
 
-  const handleCancelSession = () => {
-    if (confirm('Cancel this focus session? The progress will not be saved.')) {
-      setScreen('SETUP');
-      setActiveSession(null);
-    }
+  const resumeFromInterruptPrompt = () => {
+    setShowInterruptModal(false);
+    setIsPaused(false);
   };
 
   const handleSkipBreak = () => {
@@ -257,6 +373,7 @@ export default function App() {
                 className="icon-btn"
                 onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
                 title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+                aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
               >
                 {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
               </button>
@@ -267,6 +384,7 @@ export default function App() {
                   setIsSettingsOpen(false);
                 }}
                 title="History Log"
+                aria-label="History Log"
               >
                 <History size={16} />
               </button>
@@ -380,13 +498,36 @@ export default function App() {
         {screen === 'BREAK' && (
           <BreakTimer
             timeLeft={timeLeft}
-            duration={activeSession.breakDuration}
+            duration={activeSession.actualBreakDuration || activeSession.breakDuration}
             onSkip={handleSkipBreak}
+            isLongBreak={activeSession.isLongBreak}
+            strictBreakMode={settings.strictBreakMode}
           />
         )}
       </div>
 
       {/* Sliding Side-Panels */}
+      {showInterruptModal && (
+        <div className="overlay-panel open" style={{ zIndex: 100 }}>
+          <div className="overlay-header">
+            <h3 className="overlay-title">Interrupt Session?</h3>
+          </div>
+          <div className="overlay-content" style={{ padding: '24px', textAlign: 'center' }}>
+            <p style={{ marginBottom: '20px', color: 'var(--color-text-muted)' }}>Why are you stopping early?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {['Finished Early', 'External Distraction', 'Internal Distraction', 'Emergency', 'Other'].map(r => (
+                <button key={r} type="button" className="btn-secondary" onClick={() => submitInterruption(r)} style={{ padding: '12px' }}>
+                  {r}
+                </button>
+              ))}
+              <button type="button" className="btn-primary" onClick={resumeFromInterruptPrompt} style={{ marginTop: '12px', background: 'linear-gradient(135deg, var(--color-accent-work), #e04420)' }}>
+                Resume Working
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <HistoryPanel
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}

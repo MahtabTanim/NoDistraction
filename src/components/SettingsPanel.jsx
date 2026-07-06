@@ -30,7 +30,7 @@ export default function SettingsPanel({
   return (
     <div className={`overlay-panel ${isOpen ? 'open' : ''}`}>
       <div className="overlay-header">
-        <button className="icon-btn" onClick={onClose} title="Back">
+        <button className="icon-btn" onClick={onClose} title="Back" aria-label="Back to Timer">
           <ArrowLeft size={16} />
         </button>
         <h3 className="overlay-title">Settings</h3>
@@ -54,6 +54,63 @@ export default function SettingsPanel({
               className="form-input"
               style={{ width: '60px', textAlign: 'center' }}
             />
+          </div>
+        </div>
+
+        {/* Workflow Options */}
+        <div className="settings-section">
+          <h4 className="settings-section-title">Workflow Options</h4>
+          <div className="settings-row">
+            <div className="settings-row-label">
+              <span>Long Break Interval</span>
+              <p>Sessions before a long break (0 to disable)</p>
+            </div>
+            <input
+              type="number"
+              min="0"
+              max="10"
+              value={settings.longBreakInterval || 0}
+              onChange={(e) => onUpdateSettings({ ...settings, longBreakInterval: parseInt(e.target.value) || 0 })}
+              className="form-input"
+              style={{ width: '60px', textAlign: 'center' }}
+            />
+          </div>
+          <div className="settings-row">
+            <div className="settings-row-label">
+              <span>Long Break Duration</span>
+              <p>Duration in minutes</p>
+            </div>
+            <input
+              type="number"
+              min="5"
+              max="60"
+              value={settings.longBreakDuration || 15}
+              onChange={(e) => onUpdateSettings({ ...settings, longBreakDuration: parseInt(e.target.value) || 15 })}
+              className="form-input"
+              style={{ width: '60px', textAlign: 'center' }}
+            />
+          </div>
+          <div className="settings-row" style={{ marginTop: '8px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-main)' }}>
+              <input
+                type="checkbox"
+                checked={settings.autoTransitions || false}
+                onChange={(e) => onUpdateSettings({ ...settings, autoTransitions: e.target.checked })}
+                style={{ accentColor: 'var(--color-accent-work)' }}
+              />
+              Auto-start next session after break
+            </label>
+          </div>
+          <div className="settings-row" style={{ marginTop: '8px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-main)' }}>
+              <input
+                type="checkbox"
+                checked={settings.strictBreakMode || false}
+                onChange={(e) => onUpdateSettings({ ...settings, strictBreakMode: e.target.checked })}
+                style={{ accentColor: 'var(--color-accent-break)' }}
+              />
+              Strict Mode (Hide skip break button)
+            </label>
           </div>
         </div>
 

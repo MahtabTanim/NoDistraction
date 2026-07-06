@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, ipcMain, screen, shell } from 'electron';
+import { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, globalShortcut } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import https from 'https';
@@ -69,6 +69,18 @@ function createTray() {
   tray.on('click', (event, bounds) => {
     toggleWindow(bounds);
   });
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Toggle Window', click: () => toggleWindow(tray.getBounds()) },
+    { type: 'separator' },
+    { label: 'Pause / Resume', accelerator: 'CmdOrCtrl+Alt+P', click: () => mainWindow?.webContents.send('global-action', 'pause') },
+    { label: 'Skip / Cancel', accelerator: 'CmdOrCtrl+Alt+S', click: () => mainWindow?.webContents.send('global-action', 'skip') },
+    { type: 'separator' },
+    { label: 'Quit', role: 'quit' }
+  ]);
+  tray.on('right-click', () => {
+    tray.popUpContextMenu(contextMenu);
+  });
 }
 
 function toggleWindow(trayBounds) {
@@ -113,6 +125,15 @@ app.whenReady().then(() => {
   // Check for updates after a 3s startup delay
   setTimeout(checkForUpdates, 3000);
 
+  // Register Global Shortcuts
+  globalShortcut.register('CommandOrControl+Alt+P', () => {
+    if (mainWindow) mainWindow.webContents.send('global-action', 'pause');
+  });
+
+  globalShortcut.register('CommandOrControl+Alt+S', () => {
+    if (mainWindow) mainWindow.webContents.send('global-action', 'skip');
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -124,6 +145,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 // IPC communication

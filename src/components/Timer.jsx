@@ -66,7 +66,7 @@ export default function Timer({
           />
         </svg>
         <div className="timer-digits-container">
-          <div className="timer-digits">{formatTime(timeLeft)}</div>
+          <div className="timer-digits" aria-live="polite">{formatTime(timeLeft)}</div>
           <span className="timer-mode-tag">Deep Work</span>
         </div>
       </div>
@@ -161,13 +161,14 @@ export default function Timer({
 
       {/* Control Buttons */}
       <div className="timer-controls">
-        <button className="btn-control" onClick={onCancel} title="Cancel Session">
+        <button className="btn-control" onClick={onCancel} title="Cancel Session" aria-label="Cancel Session">
           <X size={18} />
         </button>
         <button
           className="btn-control primary"
           onClick={onTogglePause}
           title={isPaused ? 'Resume Session' : 'Pause Session'}
+          aria-label={isPaused ? 'Resume Session' : 'Pause Session'}
         >
           {isPaused ? <Play size={22} fill="currentColor" /> : <Pause size={22} fill="currentColor" />}
         </button>

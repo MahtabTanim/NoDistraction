@@ -2,11 +2,16 @@ const KEYS = {
   SETTINGS: 'nodistraction_settings',
   HISTORY: 'nodistraction_history',
   LAST_CONFIG: 'nodistraction_last_config',
+  ACTIVE_SESSION: 'nodistraction_active_session',
 };
 
 const DEFAULT_SETTINGS = {
   dailyTarget: 5,
   soundType: 'zen',
+  longBreakDuration: 15,
+  longBreakInterval: 4,
+  autoTransitions: false,
+  strictBreakMode: false,
 };
 
 const DEFAULT_CONFIG = {
@@ -96,4 +101,16 @@ export const getCompletedTodayCount = () => {
     console.error('Error calculating completed today:', err);
     return 0;
   }
+};
+
+export const getActiveSessionState = () => {
+  return safeRead(KEYS.ACTIVE_SESSION, null);
+};
+
+export const saveActiveSessionState = (state) => {
+  safeWrite(KEYS.ACTIVE_SESSION, state);
+};
+
+export const clearActiveSessionState = () => {
+  localStorage.removeItem(KEYS.ACTIVE_SESSION);
 };
