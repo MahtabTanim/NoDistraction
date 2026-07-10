@@ -24,6 +24,7 @@ import ClosingRitual from './components/ClosingRitual';
 import BreakTimer from './components/BreakTimer';
 import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
+import DailyReviewPanel from './components/DailyReviewPanel';
 
 const getInitialTheme = () => {
   const saved = localStorage.getItem('theme');
@@ -38,6 +39,7 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme());
+  const [isDailyReviewOpen, setIsDailyReviewOpen] = useState(false);
 
   // App-wide configurations
   const [settings, setSettings] = useState(getSettings());
@@ -52,6 +54,8 @@ export default function App() {
   const [completedActivationItems, setCompletedActivationItems] = useState([]);
   const [completedAvoidItems, setCompletedAvoidItems] = useState([]);
   const [completedOutcomes, setCompletedOutcomes] = useState([]);
+  const [currentCycle, setCurrentCycle] = useState(1);
+  const [distractionDump, setDistractionDump] = useState('');
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showInterruptModal, setShowInterruptModal] = useState(false);
 
@@ -90,7 +94,9 @@ export default function App() {
         timeLeft: savedTimeLeft,
         completedActivationItems: savedAct,
         completedAvoidItems: savedAvoid,
-        completedOutcomes: savedOutcomes 
+        completedOutcomes: savedOutcomes,
+        currentCycle: savedCycle,
+        distractionDump: savedDump
       } = savedState;
       
       if (endTime > Date.now() || savedIsPaused) {
@@ -100,6 +106,8 @@ export default function App() {
         setCompletedActivationItems(savedAct || []);
         setCompletedAvoidItems(savedAvoid || []);
         setCompletedOutcomes(savedOutcomes || []);
+        setCurrentCycle(savedCycle || 1);
+        setDistractionDump(savedDump || '');
         if (savedIsPaused) {
           setTimeLeft(savedTimeLeft);
           sessionEndTimeRef.current = Date.now() + savedTimeLeft * 1000;
@@ -194,11 +202,13 @@ export default function App() {
         completedActivationItems,
         completedAvoidItems,
         completedOutcomes,
+        currentCycle,
+        distractionDump
       });
     } else {
       clearActiveSessionState();
     }
-  }, [timeLeft, screen, isPaused, activeSession, completedActivationItems, completedAvoidItems, completedOutcomes]);
+  }, [timeLeft, screen, isPaused, activeSession, completedActivationItems, completedAvoidItems, completedOutcomes, currentCycle, distractionDump]);
 
   // Session start
   const handleStartSession = (config) => {
@@ -210,6 +220,8 @@ export default function App() {
     setCompletedActivationItems([]);
     setCompletedAvoidItems([]);
     setCompletedOutcomes([]);
+    setCurrentCycle(1);
+    setDistractionDump('');
     // Anchor end time to wall clock
     sessionEndTimeRef.current = Date.now() + config.duration * 60 * 1000;
     setScreen('ACTIVE');
@@ -235,8 +247,18 @@ export default function App() {
 
   // Active Focus timer reaches 0
   const handleWorkFinished = () => {
-    setScreen('CLOSING');
     startAlarm(settings.soundType);
+    if (currentCycle < (activeSession.cycles || 1)) {
+      // Transition to Break
+      const breakMs = activeSession.breakDuration * 60 * 1000;
+      setTimeLeft(activeSession.breakDuration * 60);
+      sessionEndTimeRef.current = Date.now() + breakMs;
+      setIsPaused(false);
+      setScreen('BREAK');
+    } else {
+      // All cycles complete
+      setScreen('CLOSING');
+    }
   };
 
   // Closing ritual marked complete
@@ -255,40 +277,31 @@ export default function App() {
       thingsNotToDo: activeSession.thingsNotToDo,
       closingRitual: activeSession.closingRitual,
       closingRitualCompleted: true,
+      totalCycles: activeSession.cycles || 1,
+      distractionDump: distractionDump
     };
 
     saveSession(sessionRecord);
     setHistory(getHistory()); // Refresh history logs
 
-    // Determine break duration (long break vs normal break)
-    const newCompletedCount = completedToday + 1;
-    let actualBreakDuration = activeSession.breakDuration;
-    let isLongBreak = false;
-    if (settings.longBreakInterval > 0 && newCompletedCount % settings.longBreakInterval === 0) {
-      actualBreakDuration = settings.longBreakDuration;
-      isLongBreak = true;
-    }
-
-    // Instantly transition to Break Timer
-    const breakMs = actualBreakDuration * 60 * 1000;
-    setTimeLeft(actualBreakDuration * 60);
-    sessionEndTimeRef.current = Date.now() + breakMs;
-    setIsPaused(false);
-    // Pass isLongBreak to activeSession to display it on break screen if needed, though activeSession holds original config.
-    setActiveSession(prev => ({ ...prev, actualBreakDuration, isLongBreak }));
-    setScreen('BREAK');
+    setScreen('SETUP');
+    setActiveSession(null);
   };
 
   // Break timer reaches 0
   const handleBreakFinished = () => {
     // Play a friendly finish chime
     playPreview(settings.soundType);
-    if (settings.autoTransitions) {
-      handleStartSession(lastConfig); // Automatically start next session
-    } else {
-      setScreen('SETUP');
-      setActiveSession(null);
-    }
+    
+    // Auto-pause and wait for user to click play for the next work cycle
+    setTimeLeft(activeSession.duration * 60);
+    setIsPaused(true);
+    setCurrentCycle(prev => prev + 1);
+    setScreen('ACTIVE');
+  };
+
+  const handleSkipBreak = () => {
+    handleBreakFinished();
   };
 
   const handleCancelSession = () => {
@@ -310,6 +323,8 @@ export default function App() {
       closingRitualCompleted: false,
       interrupted: true,
       interruptionReason: reason,
+      totalCycles: activeSession.cycles || 1,
+      distractionDump: distractionDump
     };
     saveSession(sessionRecord);
     setHistory(getHistory());
@@ -324,9 +339,8 @@ export default function App() {
     setIsPaused(false);
   };
 
-  const handleSkipBreak = () => {
-    setScreen('SETUP');
-    setActiveSession(null);
+  const handleSkipBreakEarly = () => {
+    handleBreakFinished();
   };
 
   // Settings & History actions
@@ -382,6 +396,7 @@ export default function App() {
                 onClick={() => {
                   setIsHistoryOpen(!isHistoryOpen);
                   setIsSettingsOpen(false);
+                  setIsDailyReviewOpen(false);
                 }}
                 title="History Log"
                 aria-label="History Log"
@@ -389,10 +404,22 @@ export default function App() {
                 <History size={16} />
               </button>
               <button
+                className={`icon-btn ${isDailyReviewOpen ? 'active' : ''}`}
+                onClick={() => {
+                  setIsDailyReviewOpen(!isDailyReviewOpen);
+                  setIsHistoryOpen(false);
+                  setIsSettingsOpen(false);
+                }}
+                title="Daily Review"
+              >
+                <span style={{ fontSize: '12px', fontWeight: 600, padding: '0 4px' }}>Review</span>
+              </button>
+              <button
                 className={`icon-btn ${isSettingsOpen ? 'active' : ''}`}
                 onClick={() => {
                   setIsSettingsOpen(!isSettingsOpen);
                   setIsHistoryOpen(false);
+                  setIsDailyReviewOpen(false);
                 }}
                 title="Settings"
               >
@@ -484,6 +511,10 @@ export default function App() {
             onToggleAvoidItem={handleToggleAvoidItem}
             completedOutcomes={completedOutcomes}
             onToggleOutcome={handleToggleOutcome}
+            currentCycle={currentCycle}
+            totalCycles={activeSession.cycles || 1}
+            distractionDump={distractionDump}
+            setDistractionDump={setDistractionDump}
           />
         )}
 
@@ -498,9 +529,9 @@ export default function App() {
         {screen === 'BREAK' && (
           <BreakTimer
             timeLeft={timeLeft}
-            duration={activeSession.actualBreakDuration || activeSession.breakDuration}
-            onSkip={handleSkipBreak}
-            isLongBreak={activeSession.isLongBreak}
+            duration={activeSession.breakDuration}
+            onSkip={handleSkipBreakEarly}
+            isLongBreak={false}
             strictBreakMode={settings.strictBreakMode}
           />
         )}
@@ -541,6 +572,11 @@ export default function App() {
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
         onClearHistory={handleClearHistory}
+      />
+      
+      <DailyReviewPanel
+        isOpen={isDailyReviewOpen}
+        onClose={() => setIsDailyReviewOpen(false)}
       />
     </div>
   );

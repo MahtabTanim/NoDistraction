@@ -16,6 +16,10 @@ export default function Timer({
   onToggleAvoidItem,
   completedOutcomes,
   onToggleOutcome,
+  currentCycle,
+  totalCycles,
+  distractionDump,
+  setDistractionDump,
 }) {
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
@@ -67,7 +71,7 @@ export default function Timer({
         </svg>
         <div className="timer-digits-container">
           <div className="timer-digits" aria-live="polite">{formatTime(timeLeft)}</div>
-          <span className="timer-mode-tag">Deep Work</span>
+          <span className="timer-mode-tag">Deep Work • Cycle {currentCycle} of {totalCycles}</span>
         </div>
       </div>
 
@@ -157,6 +161,22 @@ export default function Timer({
             </div>
           </div>
         )}
+
+        {/* Distraction Dump */}
+        <div className="goal-context-card distraction-dump-card" style={{ borderLeft: '3px solid rgba(154, 155, 166, 0.5)' }}>
+          <div style={{ width: '100%' }}>
+            <div className="context-title" style={{ fontSize: '9px', marginBottom: '8px', color: 'var(--color-text-muted)' }}>
+              Distraction Dump
+            </div>
+            <textarea
+              className="form-input textarea-input dump-textarea"
+              style={{ width: '100%', height: '64px', fontSize: '13px', resize: 'none', backgroundColor: 'transparent', border: '1px dashed var(--border-glow)', borderRadius: '8px', padding: '10px' }}
+              placeholder="Dump distracting thoughts here to offload them from your mind..."
+              value={distractionDump}
+              onChange={(e) => setDistractionDump(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Control Buttons */}

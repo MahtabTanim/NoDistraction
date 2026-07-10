@@ -246,7 +246,22 @@ textarea:focus-visible,
 
 .textarea-input {
   resize: none;
-  height: 64px;
+  height: 72px;
+  line-height: 1.5;
+  border: 1px solid var(--border-glow);
+  border-radius: 8px;
+  background-color: var(--bg-input);
+}
+
+.textarea-input:focus {
+  border-color: var(--color-accent-work);
+  background-color: var(--bg-input-focus);
+}
+
+.dump-textarea:focus {
+  border-style: solid !important;
+  border-color: var(--color-accent-break) !important;
+  box-shadow: 0 4px 12px var(--color-accent-break-glow) !important;
 }
 
 /* 1-10 Pill Selectors */

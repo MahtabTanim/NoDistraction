@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Trash2, Calendar, MapPin, Zap, Sparkles, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Trash2, Calendar, MapPin, Zap, Sparkles, ChevronDown, ChevronUp, AlertTriangle, Download } from 'lucide-react';
+import { exportHistoryToCSV } from '../utils/storage';
 
 export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem }) {
   const [expandedId, setExpandedId] = useState(null);
@@ -30,23 +31,32 @@ export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem })
     }
   };
 
+  const todayHistory = history.filter(item => {
+    try {
+      return new Date(item.timestamp).toDateString() === new Date().toDateString();
+    } catch(e) { return false; }
+  });
+
   return (
     <div className={`overlay-panel ${isOpen ? 'open' : ''}`}>
       <div className="overlay-header">
         <button className="icon-btn" onClick={onClose} title="Back" aria-label="Back to Timer">
           <ArrowLeft size={16} />
         </button>
-        <h3 className="overlay-title">Session History</h3>
+        <h3 className="overlay-title">Today's History</h3>
+        <button className="icon-btn" onClick={exportHistoryToCSV} title="Export CSV" aria-label="Export CSV">
+          <Download size={16} />
+        </button>
       </div>
 
       <div className="overlay-content">
-        {history.length === 0 ? (
+        {todayHistory.length === 0 ? (
           <div className="history-empty">
             <Calendar size={36} style={{ strokeWidth: 1.5, color: 'var(--color-text-muted)' }} />
-            <p>No completed focus sessions yet.</p>
+            <p>No completed focus sessions today.</p>
           </div>
         ) : (
-          history.map((item) => {
+          todayHistory.map((item) => {
             const isExpanded = expandedId === item.id;
             return (
               <div key={item.id} className="history-card">
@@ -117,6 +127,14 @@ export default function HistoryPanel({ isOpen, onClose, history, onDeleteItem })
                       <div className="history-detail-group">
                         <span className="history-detail-label">Activation Ritual</span>
                         <span className="history-detail-val">{item.activationRitual}</span>
+                      </div>
+                    )}
+
+                    {/* Distraction Dump */}
+                    {item.distractionDump && (
+                      <div className="history-detail-group">
+                        <span className="history-detail-label" style={{ color: 'var(--color-accent-break)' }}>Distraction Dump</span>
+                        <span className="history-detail-val">{item.distractionDump}</span>
                       </div>
                     )}
 

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Coffee, SkipForward } from 'lucide-react';
 
 const BREAK_TIPS = [
-  'Rest your eyes. Look at something 20 feet away for 20 seconds.',
-  'Stand up, stretch your arms, and roll your shoulders.',
-  'Hydrate! Go drink a glass of fresh water.',
-  'Inhale slowly for 4 seconds, hold for 4, exhale for 6.',
-  'Step away from all digital screens. Walk around the room.',
-  'Shake out your hands and stretch your wrists.',
+  'Focus Protocol: Stand up and move your body.',
+  'Focus Protocol: Hydrate. Go drink a glass of fresh water.',
+  'Focus Protocol: Let your mind wander completely away from screens.',
+  'Step away from your desk. Walk around the room.',
+  'Rest your eyes. Look at something far away.',
 ];
 
 export default function BreakTimer({ timeLeft, duration, onSkip, isLongBreak, strictBreakMode }) {
@@ -80,7 +79,7 @@ export default function BreakTimer({ timeLeft, duration, onSkip, isLongBreak, st
       {!strictBreakMode && (
         <div style={{ width: '100%' }}>
           <button type="button" className="btn-primary" onClick={onSkip} style={{ background: 'linear-gradient(135deg, var(--color-accent-break), #0d9488)', boxShadow: '0 6px 20px var(--color-accent-break-glow)' }}>
-            <SkipForward size={16} /> Skip Break
+            <SkipForward size={16} /> Ready for Next Cycle
           </button>
         </div>
       )}
