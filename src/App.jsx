@@ -411,8 +411,8 @@ export default function App() {
       <div className="scrollable-content">
         {screen === 'SETUP' && updateInfo && (
           <div className="update-banner-card" style={{
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
-            border: '1px solid rgba(16, 185, 129, 0.25)',
+            backgroundColor: 'rgba(63, 197, 189, 0.08)',
+            border: '1px solid rgba(63, 197, 189, 0.25)',
             borderRadius: '12px',
             padding: '12px 16px',
             marginBottom: '16px',
@@ -435,7 +435,7 @@ export default function App() {
               <button
                 onClick={() => window.api.openUpdateLink(updateInfo.url)}
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-accent-break), #0d9488)',
+                  background: 'linear-gradient(135deg, var(--color-accent-break), var(--color-accent-break-2))',
                   border: 'none',
                   color: '#fff',
                   fontSize: '11px',
@@ -520,7 +520,7 @@ export default function App() {
                   {r}
                 </button>
               ))}
-              <button type="button" className="btn-primary" onClick={resumeFromInterruptPrompt} style={{ marginTop: '12px', background: 'linear-gradient(135deg, var(--color-accent-work), #e04420)' }}>
+              <button type="button" className="btn-primary" onClick={resumeFromInterruptPrompt} style={{ marginTop: '12px', background: 'linear-gradient(135deg, var(--color-accent-work), var(--color-accent-work-2))' }}>
                 Resume Working
               </button>
             </div>
