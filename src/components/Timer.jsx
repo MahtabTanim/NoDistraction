@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, X, AlertTriangle, Target, Check, Sparkles } from 'lucide-react';
+import { AlertTriangle, Check, Pause, Play, Sparkles, Target, X } from 'lucide-react';
 
 export default function Timer({
   timeLeft,
@@ -12,8 +12,6 @@ export default function Timer({
   onCancel,
   completedActivationItems,
   onToggleActivationItem,
-  completedAvoidItems,
-  onToggleAvoidItem,
   completedOutcomes,
   onToggleOutcome,
   currentCycle,
@@ -27,36 +25,37 @@ export default function Timer({
     return `${m}:${s}`;
   };
 
+  const splitItems = (value) => (value ? value.split(',').map((s) => s.trim()).filter(Boolean) : []);
+  const activationItems = splitItems(activationRitual);
+  const avoidItems = splitItems(thingsNotToDo);
+  const outcomeItems = splitItems(outcome);
   const totalSeconds = duration * 60;
-  const strokeDashoffset = totalSeconds > 0 
-    ? 565.48 * (1 - (timeLeft / totalSeconds)) 
-    : 0;
+  const strokeDashoffset = totalSeconds > 0 ? 565.48 * (1 - timeLeft / totalSeconds) : 0;
 
-  const activationItems = activationRitual
-    ? activationRitual.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
-
-  const avoidItems = thingsNotToDo
-    ? thingsNotToDo.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
-
-  const outcomeItems = outcome
-    ? outcome.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
+  const checklist = (items, completed, onToggle) => (
+    <div className="checklist-items">
+      {items.map((item) => {
+        const isDone = completed.includes(item);
+        return (
+          <button
+            key={item}
+            type="button"
+            className={`checklist-item ${isDone ? 'checked' : ''}`}
+            onClick={() => onToggle(item)}
+          >
+            <span className="checkbox-visual">{isDone && <Check size={12} strokeWidth={3} />}</span>
+            <span className="item-text">{item}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="timer-screen">
-      {/* Circular Progress Ring */}
       <div className="timer-ring-container">
         <svg className="timer-ring-svg">
-          <circle
-            cx="100"
-            cy="100"
-            r="90"
-            className="timer-ring-bg"
-            strokeWidth="4"
-            fill="none"
-          />
+          <circle cx="100" cy="100" r="90" className="timer-ring-bg" strokeWidth="4" fill="none" />
           <circle
             cx="100"
             cy="100"
@@ -70,116 +69,61 @@ export default function Timer({
           />
         </svg>
         <div className="timer-digits-container">
-          <div className="timer-digits" aria-live="polite">{formatTime(timeLeft)}</div>
-          <span className="timer-mode-tag">Deep Work • Cycle {currentCycle} of {totalCycles}</span>
+          <div className="timer-digits" aria-live="polite">
+            {formatTime(timeLeft)}
+          </div>
+          <span className="timer-mode-tag">Deep Work - Cycle {currentCycle} of {totalCycles}</span>
         </div>
       </div>
 
-      {/* Cards List Section */}
-      <div className="timer-details-container" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', margin: '12px 0' }}>
-        
-        {/* Activation Ritual Box */}
+      <div className="timer-details-container">
         {activationItems.length > 0 && (
-          <div className="goal-context-card activation-checklist">
-            <div style={{ width: '100%' }}>
-              <div className="context-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '9px', marginBottom: '8px' }}>
-                <Sparkles size={12} /> Activation Ritual
-              </div>
-              <div className="checklist-items">
-                {activationItems.map((item, idx) => {
-                  const isDone = completedActivationItems.includes(item);
-                  return (
-                    <div
-                      key={idx}
-                      className={`checklist-item ${isDone ? 'checked' : ''}`}
-                      onClick={() => onToggleActivationItem(item)}
-                    >
-                      <div className="checkbox-visual">
-                        {isDone && <Check size={12} strokeWidth={3} />}
-                      </div>
-                      <span className="item-text">{item}</span>
-                    </div>
-                  );
-                })}
-              </div>
+          <div className="goal-context-card">
+            <div className="context-title">
+              <Sparkles size={12} />
+              Activation Ritual
             </div>
+            {checklist(activationItems, completedActivationItems, onToggleActivationItem)}
           </div>
         )}
 
-        {/* Target Outcomes Card */}
         {outcomeItems.length > 0 && (
           <div className="goal-context-card target-outcome">
-            <div style={{ width: '100%' }}>
-              <div className="context-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '9px', marginBottom: '8px', color: 'var(--color-accent-work)' }}>
-                <Target size={12} /> Target Outcomes
-              </div>
-              <div className="checklist-items">
-                {outcomeItems.map((item, idx) => {
-                  const isDone = completedOutcomes.includes(item);
-                  return (
-                    <div
-                      key={idx}
-                      className={`checklist-item ${isDone ? 'checked' : ''}`}
-                      onClick={() => onToggleOutcome(item)}
-                    >
-                      <div className="checkbox-visual">
-                        {isDone && <Check size={12} strokeWidth={3} />}
-                      </div>
-                      <span className="item-text">{item}</span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="context-title work-title">
+              <Target size={12} />
+              Target Outcome
             </div>
+            {checklist(outcomeItems, completedOutcomes, onToggleOutcome)}
           </div>
         )}
 
-        {/* Things NOT to do Card */}
         {avoidItems.length > 0 && (
           <div className="goal-context-card avoid-list">
-            <div style={{ width: '100%' }}>
-              <div className="context-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '9px', marginBottom: '8px', color: 'var(--color-warning)' }}>
-                <AlertTriangle size={12} /> Things to avoid
-              </div>
-              <div className="checklist-items">
-                {avoidItems.map((item, idx) => {
-                  const isDone = completedAvoidItems.includes(item);
-                  return (
-                    <div
-                      key={idx}
-                      className={`checklist-item avoid ${isDone ? 'checked' : ''}`}
-                      onClick={() => onToggleAvoidItem(item)}
-                    >
-                      <div className="checkbox-visual warning">
-                        {isDone && <Check size={12} strokeWidth={3} />}
-                      </div>
-                      <span className="item-text">{item}</span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="context-title warning-title">
+              <AlertTriangle size={12} />
+              Avoid
+            </div>
+            <div className="avoid-chip-list">
+              {avoidItems.map((item) => (
+                <span key={item} className="avoid-chip">
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Distraction Dump */}
-        <div className="goal-context-card distraction-dump-card" style={{ borderLeft: '3px solid rgba(154, 155, 166, 0.5)' }}>
-          <div style={{ width: '100%' }}>
-            <div className="context-title" style={{ fontSize: '9px', marginBottom: '8px', color: 'var(--color-text-muted)' }}>
-              Distraction Dump
-            </div>
-            <textarea
-              className="form-input textarea-input dump-textarea"
-              style={{ width: '100%', height: '64px', fontSize: '13px', resize: 'none', backgroundColor: 'transparent', border: '1px dashed var(--border-glow)', borderRadius: '8px', padding: '10px' }}
-              placeholder="Dump distracting thoughts here to offload them from your mind..."
-              value={distractionDump}
-              onChange={(e) => setDistractionDump(e.target.value)}
-            />
-          </div>
+        <div className="goal-context-card distraction-dump-card">
+          <div className="context-title muted-title">Distraction Dump</div>
+          <textarea
+            className="form-input textarea-input dump-textarea"
+            placeholder="Park distracting thoughts here."
+            value={distractionDump}
+            onChange={(e) => setDistractionDump(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* Control Buttons */}
       <div className="timer-controls">
         <button className="btn-control" onClick={onCancel} title="Cancel Session" aria-label="Cancel Session">
           <X size={18} />

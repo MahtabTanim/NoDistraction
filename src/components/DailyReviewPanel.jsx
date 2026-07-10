@@ -1,27 +1,36 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Save, Sparkles, Zap, Target, Star } from 'lucide-react';
-import { saveDailyReview } from '../utils/storage';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Save, Sparkles, Star, Target, Zap } from 'lucide-react';
+import { getTodayDailyReview, saveDailyReview } from '../utils/storage';
+
+const emptyReview = {
+  workRating: 5,
+  energyRating: 5,
+  focusLostReason: '',
+  goodThing: '',
+};
 
 export default function DailyReviewPanel({ isOpen, onClose }) {
-  const [formData, setFormData] = useState({
-    workRating: 5,
-    energyRating: 5,
-    focusLostReason: '',
-    goodThing: ''
-  });
-
+  const [formData, setFormData] = useState(emptyReview);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const todayReview = getTodayDailyReview();
+      setFormData(todayReview ? { ...emptyReview, ...todayReview } : emptyReview);
+      setSubmitted(false);
+    }
+  }, [isOpen]);
 
   const renderRatingPills = (field, currentValue) => (
     <div className="pill-rating-container">
-      {[...Array(10)].map((_, i) => {
+      {Array.from({ length: 10 }, (_, i) => {
         const val = i + 1;
         return (
           <button
             key={val}
             type="button"
             className={`pill-rating-btn ${currentValue === val ? 'active' : ''}`}
-            onClick={() => setFormData(prev => ({ ...prev, [field]: val }))}
+            onClick={() => setFormData((prev) => ({ ...prev, [field]: val }))}
           >
             {val}
           </button>
@@ -34,22 +43,12 @@ export default function DailyReviewPanel({ isOpen, onClose }) {
     e.preventDefault();
     saveDailyReview(formData);
     setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      onClose();
-      setFormData({
-        workRating: 5,
-        energyRating: 5,
-        focusLostReason: '',
-        goodThing: ''
-      });
-    }, 1500);
   };
 
   return (
     <div className={`overlay-panel ${isOpen ? 'open' : ''}`}>
       <div className="overlay-header">
-        <button className="icon-btn" onClick={onClose} title="Back">
+        <button className="icon-btn" onClick={onClose} title="Back" aria-label="Back to Timer">
           <ArrowLeft size={16} />
         </button>
         <h3 className="overlay-title">Daily Review</h3>
@@ -57,51 +56,57 @@ export default function DailyReviewPanel({ isOpen, onClose }) {
 
       <div className="overlay-content">
         {submitted ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: 'var(--color-accent-break)' }}>
-            <Sparkles size={48} />
-            <h2>Review Saved!</h2>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>Great work today. See you tomorrow.</p>
+          <div className="review-saved-state">
+            <Sparkles size={44} />
+            <h2>Review Saved</h2>
+            <p>You can reopen this panel to edit today&apos;s review.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-              Take a moment to reflect on your day before fully disconnecting.
-            </p>
+          <form onSubmit={handleSubmit} className="daily-review-form">
+            <p className="panel-note">One review is saved per day.</p>
 
             <div className="form-group">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Target size={14} /> How do you rate yourself out of 10 for today's work?</label>
+              <label>
+                <Target size={14} />
+                Today&apos;s work
+              </label>
               {renderRatingPills('workRating', formData.workRating)}
             </div>
 
             <div className="form-group">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Zap size={14} /> How was your energy out of 10?</label>
+              <label>
+                <Zap size={14} />
+                Energy
+              </label>
               {renderRatingPills('energyRating', formData.energyRating)}
             </div>
 
             <div className="form-group">
-              <label>If you lost focus, what was the reason? How do you plan to overcome this?</label>
+              <label>If focus slipped, what caused it?</label>
               <textarea
                 className="form-input textarea-input"
-                style={{ height: '80px' }}
                 value={formData.focusLostReason}
-                onChange={e => setFormData(prev => ({ ...prev, focusLostReason: e.target.value }))}
-                placeholder="e.g. Got sidetracked by a Slack ping. Tomorrow I'll use DND mode."
+                onChange={(e) => setFormData((prev) => ({ ...prev, focusLostReason: e.target.value }))}
+                placeholder="e.g. Slack pings. Tomorrow I will enable DND."
               />
             </div>
 
             <div className="form-group">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Star size={14} /> Good thing that happened today, thing you are proud of</label>
+              <label>
+                <Star size={14} />
+                One good thing
+              </label>
               <textarea
                 className="form-input textarea-input"
-                style={{ height: '80px' }}
                 value={formData.goodThing}
-                onChange={e => setFormData(prev => ({ ...prev, goodThing: e.target.value }))}
-                placeholder="e.g. Successfully cracked the complex state management bug."
+                onChange={(e) => setFormData((prev) => ({ ...prev, goodThing: e.target.value }))}
+                placeholder="e.g. Finished the hardest part of the feature."
               />
             </div>
 
-            <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
-              <Save size={18} /> Save Daily Review
+            <button type="submit" className="btn-primary">
+              <Save size={18} />
+              Save Daily Review
             </button>
           </form>
         )}

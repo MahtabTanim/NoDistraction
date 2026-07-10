@@ -18,7 +18,7 @@ const isDev = process.defaultApp || /node_modules[\\/]electron[\\/]/.test(proces
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 360,
+    width: 432,
     height: 816,
     show: false,
     frame: false,

@@ -1,113 +1,115 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { History, Settings, X, Sun, Moon } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ClipboardList, History, Moon, Settings, Sun, X } from 'lucide-react';
 
-// Utilities
-import { startAlarm, stopAlarm, playPreview } from './utils/audio';
+import { playPreview, startAlarm, stopAlarm } from './utils/audio';
 import {
-  getSettings,
-  saveSettings,
-  getHistory,
-  saveSession,
-  deleteSession,
-  getLastSessionConfig,
-  saveLastSessionConfig,
-  getCompletedTodayCount,
-  getActiveSessionState,
-  saveActiveSessionState,
   clearActiveSessionState,
+  clearHistory,
+  deleteSession,
+  getActiveSessionState,
+  getCompletedTodayCount,
+  getHistory,
+  getLastSessionConfig,
+  getSettings,
+  saveActiveSessionState,
+  saveLastSessionConfig,
+  saveSession,
+  saveSettings,
 } from './utils/storage';
 
-// Components
-import SetupForm from './components/SetupForm';
-import Timer from './components/Timer';
-import ClosingRitual from './components/ClosingRitual';
 import BreakTimer from './components/BreakTimer';
+import ClosingRitual from './components/ClosingRitual';
+import DailyReviewPanel from './components/DailyReviewPanel';
 import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
-import DailyReviewPanel from './components/DailyReviewPanel';
+import SetupForm from './components/SetupForm';
+import Timer from './components/Timer';
 
 const getInitialTheme = () => {
   const saved = localStorage.getItem('theme');
   if (saved === 'dark' || saved === 'light') return saved;
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  return prefersDark ? 'dark' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 export default function App() {
-  // Navigation & Sub-panels state
-  const [screen, setScreen] = useState('SETUP'); // 'SETUP' | 'ACTIVE' | 'CLOSING' | 'BREAK'
+  const [screen, setScreen] = useState('SETUP');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [theme, setTheme] = useState(getInitialTheme());
   const [isDailyReviewOpen, setIsDailyReviewOpen] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme());
 
-  // App-wide configurations
   const [settings, setSettings] = useState(getSettings());
   const [history, setHistory] = useState(getHistory());
   const [lastConfig, setLastConfig] = useState(getLastSessionConfig());
   const [completedToday, setCompletedToday] = useState(getCompletedTodayCount());
 
-  // Active Session State
   const [activeSession, setActiveSession] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [completedActivationItems, setCompletedActivationItems] = useState([]);
-  const [completedAvoidItems, setCompletedAvoidItems] = useState([]);
   const [completedOutcomes, setCompletedOutcomes] = useState([]);
   const [currentCycle, setCurrentCycle] = useState(1);
+  const [currentBreakDuration, setCurrentBreakDuration] = useState(0);
+  const [currentBreakIsLong, setCurrentBreakIsLong] = useState(false);
   const [distractionDump, setDistractionDump] = useState('');
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showInterruptModal, setShowInterruptModal] = useState(false);
 
-  // Wall-clock end time ref — never freezes when window is hidden
   const sessionEndTimeRef = useRef(null);
-  
-  // Refs for global shortcuts
   const screenRef = useRef(screen);
   const isPausedRef = useRef(isPaused);
-  useEffect(() => { screenRef.current = screen; }, [screen]);
-  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  const activeSessionRef = useRef(activeSession);
 
-  // Apply theme to document body and persist
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
+
   useEffect(() => {
     document.body.classList.remove('dark-mode', 'light-mode');
     document.body.classList.add(`${theme}-mode`);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Listen for update-available IPC notifications on mount
   useEffect(() => {
-    if (window.api && window.api.onUpdateAvailable) {
-      window.api.onUpdateAvailable((info) => {
-        setUpdateInfo(info);
-      });
+    if (window.api?.onUpdateAvailable) {
+      window.api.onUpdateAvailable((info) => setUpdateInfo(info));
     }
 
-    // Recover active session if exists
     const savedState = getActiveSessionState();
     if (savedState) {
-      const { 
-        screen: savedScreen, 
-        activeSession: savedConfig, 
-        endTime, 
-        isPaused: savedIsPaused, 
-        timeLeft: savedTimeLeft,
+      const {
+        activeSession: savedConfig,
         completedActivationItems: savedAct,
-        completedAvoidItems: savedAvoid,
         completedOutcomes: savedOutcomes,
+        currentBreakDuration: savedBreakDuration,
+        currentBreakIsLong: savedBreakIsLong,
         currentCycle: savedCycle,
-        distractionDump: savedDump
+        distractionDump: savedDump,
+        endTime,
+        isPaused: savedIsPaused,
+        screen: savedScreen,
+        timeLeft: savedTimeLeft,
       } = savedState;
-      
+
       if (endTime > Date.now() || savedIsPaused) {
         setScreen(savedScreen);
         setActiveSession(savedConfig);
         setIsPaused(savedIsPaused);
         setCompletedActivationItems(savedAct || []);
-        setCompletedAvoidItems(savedAvoid || []);
         setCompletedOutcomes(savedOutcomes || []);
         setCurrentCycle(savedCycle || 1);
+        setCurrentBreakDuration(savedBreakDuration || savedConfig?.breakDuration || 0);
+        setCurrentBreakIsLong(Boolean(savedBreakIsLong));
         setDistractionDump(savedDump || '');
+
         if (savedIsPaused) {
           setTimeLeft(savedTimeLeft);
           sessionEndTimeRef.current = Date.now() + savedTimeLeft * 1000;
@@ -120,38 +122,77 @@ export default function App() {
       }
     }
 
-    // Global action listener (tray menu and shortcuts)
-    if (window.api && window.api.onGlobalAction) {
+    if (window.api?.onGlobalAction) {
       window.api.onGlobalAction((action) => {
-        if (action === 'pause') {
-          if (screenRef.current === 'ACTIVE') setIsPaused(!isPausedRef.current);
-        } else if (action === 'skip') {
+        if (action === 'pause' && screenRef.current === 'ACTIVE') {
+          setIsPaused(!isPausedRef.current);
+        }
+
+        if (action === 'skip') {
           if (screenRef.current === 'ACTIVE') {
             setIsPaused(true);
             setShowInterruptModal(true);
           } else if (screenRef.current === 'BREAK') {
-            setScreen('SETUP');
-            setActiveSession(null);
+            finishBreak();
           }
         }
       });
     }
   }, []);
 
-  // Synchronize history count today
   useEffect(() => {
     setCompletedToday(getCompletedTodayCount());
   }, [history]);
 
-  // Main countdown ticking logic — wall-clock anchored so hiding the window never freezes it
-  useEffect(() => {
-    if (isPaused || (screen !== 'ACTIVE' && screen !== 'BREAK')) {
+  const getBreakForCycle = (cycle, sessionConfig = activeSession) => {
+    const interval = Number(settings.longBreakInterval) || 0;
+    const isLongBreak = interval > 0 && cycle % interval === 0 && cycle < (sessionConfig?.cycles || 1);
+    return {
+      duration: isLongBreak ? Number(settings.longBreakDuration) || sessionConfig.breakDuration : sessionConfig.breakDuration,
+      isLongBreak,
+    };
+  };
+
+  const finishWork = () => {
+    if (!activeSession) return;
+
+    if (currentCycle < (activeSession.cycles || 1)) {
+      playPreview(settings.soundType);
+      const nextBreak = getBreakForCycle(currentCycle);
+      const nextTimeLeft = nextBreak.duration * 60;
+
+      setCurrentBreakDuration(nextBreak.duration);
+      setCurrentBreakIsLong(nextBreak.isLongBreak);
+      setTimeLeft(nextTimeLeft);
+      sessionEndTimeRef.current = Date.now() + nextTimeLeft * 1000;
+      setIsPaused(false);
+      setScreen('BREAK');
       return;
     }
 
-    // On every (re)start (new session, resume from pause, screen change),
-    // recalibrate the end time using the current timeLeft so accumulated
-    // paused time is correctly excluded.
+    startAlarm(settings.soundType);
+    setScreen('CLOSING');
+  };
+
+  const finishBreak = () => {
+    const sessionConfig = activeSessionRef.current;
+    if (!sessionConfig) return;
+
+    playPreview(settings.soundType);
+    const nextTimeLeft = sessionConfig.duration * 60;
+    const shouldPause = !settings.autoTransitions;
+
+    setTimeLeft(nextTimeLeft);
+    sessionEndTimeRef.current = Date.now() + nextTimeLeft * 1000;
+    setIsPaused(shouldPause);
+    setCurrentCycle((prev) => prev + 1);
+    setCurrentBreakIsLong(false);
+    setScreen('ACTIVE');
+  };
+
+  useEffect(() => {
+    if (isPaused || (screen !== 'ACTIVE' && screen !== 'BREAK')) return undefined;
+
     setTimeLeft((current) => {
       sessionEndTimeRef.current = Date.now() + current * 1000;
       return current;
@@ -163,35 +204,31 @@ export default function App() {
         clearInterval(timerId);
         setTimeLeft(0);
         if (screen === 'ACTIVE') {
-          handleWorkFinished();
-        } else if (screen === 'BREAK') {
-          handleBreakFinished();
+          finishWork();
+        } else {
+          finishBreak();
         }
       } else {
         setTimeLeft(remaining);
       }
-    }, 500); // Poll every 500ms so re-opening window catches up within half a second
+    }, 500);
 
     return () => clearInterval(timerId);
   }, [isPaused, screen]);
 
-  // Sync timer display to macOS system tray menu bar
   useEffect(() => {
-    if (window.api && window.api.updateTrayTitle) {
-      if (screen === 'ACTIVE') {
+    if (window.api?.updateTrayTitle) {
+      if (screen === 'ACTIVE' || screen === 'BREAK') {
         const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
-        window.api.updateTrayTitle(`${m}:${s}`);
-      } else if (screen === 'BREAK') {
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        const s = (timeLeft % 60).toString().padStart(2, '0');
-        window.api.updateTrayTitle(`☕ ${m}:${s}`);
+        window.api.updateTrayTitle(screen === 'BREAK' ? `☕ ${m}:${s}` : `${m}:${s}`);
       } else {
         window.api.updateTrayTitle('');
       }
     }
+  }, [screen, timeLeft]);
 
-    // Persist active session state
+  useEffect(() => {
     if (screen === 'ACTIVE' || screen === 'BREAK') {
       saveActiveSessionState({
         screen,
@@ -200,17 +237,33 @@ export default function App() {
         isPaused,
         timeLeft,
         completedActivationItems,
-        completedAvoidItems,
         completedOutcomes,
         currentCycle,
-        distractionDump
+        currentBreakDuration,
+        currentBreakIsLong,
+        distractionDump,
       });
     } else {
       clearActiveSessionState();
     }
-  }, [timeLeft, screen, isPaused, activeSession, completedActivationItems, completedAvoidItems, completedOutcomes, currentCycle, distractionDump]);
+  }, [
+    activeSession,
+    completedActivationItems,
+    completedOutcomes,
+    currentBreakDuration,
+    currentBreakIsLong,
+    currentCycle,
+    distractionDump,
+    isPaused,
+    screen,
+  ]);
 
-  // Session start
+  const closePanels = () => {
+    setIsHistoryOpen(false);
+    setIsSettingsOpen(false);
+    setIsDailyReviewOpen(false);
+  };
+
   const handleStartSession = (config) => {
     saveLastSessionConfig(config);
     setLastConfig(config);
@@ -221,129 +274,55 @@ export default function App() {
     setCompletedAvoidItems([]);
     setCompletedOutcomes([]);
     setCurrentCycle(1);
+    setCurrentBreakDuration(config.breakDuration);
+    setCurrentBreakIsLong(false);
     setDistractionDump('');
-    // Anchor end time to wall clock
     sessionEndTimeRef.current = Date.now() + config.duration * 60 * 1000;
+    closePanels();
     setScreen('ACTIVE');
   };
 
-  const handleToggleActivationItem = (item) => {
-    setCompletedActivationItems((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-    );
+  const toggleItem = (setter, item) => {
+    setter((prev) => (prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]));
   };
 
-  const handleToggleAvoidItem = (item) => {
-    setCompletedAvoidItems((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-    );
-  };
+  const sessionRecord = (extra = {}) => ({
+    outcome: activeSession.outcome,
+    workspaceRating: activeSession.workspaceRating,
+    distractions: activeSession.distractions,
+    activationRitual: activeSession.activationRitual,
+    energyRating: activeSession.energyRating,
+    duration: activeSession.duration,
+    breakDuration: activeSession.breakDuration,
+    thingsNotToDo: activeSession.thingsNotToDo,
+    closingRitual: activeSession.closingRitual,
+    totalCycles: activeSession.cycles || 1,
+    completedCycles: currentCycle,
+    distractionDump,
+    ...extra,
+  });
 
-  const handleToggleOutcome = (item) => {
-    setCompletedOutcomes((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-    );
-  };
-
-  // Active Focus timer reaches 0
-  const handleWorkFinished = () => {
-    startAlarm(settings.soundType);
-    if (currentCycle < (activeSession.cycles || 1)) {
-      // Transition to Break
-      const breakMs = activeSession.breakDuration * 60 * 1000;
-      setTimeLeft(activeSession.breakDuration * 60);
-      sessionEndTimeRef.current = Date.now() + breakMs;
-      setIsPaused(false);
-      setScreen('BREAK');
-    } else {
-      // All cycles complete
-      setScreen('CLOSING');
-    }
-  };
-
-  // Closing ritual marked complete
   const handleClosingCompleted = () => {
     stopAlarm();
-
-    // Log focus session record to storage
-    const sessionRecord = {
-      outcome: activeSession.outcome,
-      workspaceRating: activeSession.workspaceRating,
-      distractions: activeSession.distractions,
-      activationRitual: activeSession.activationRitual,
-      energyRating: activeSession.energyRating,
-      duration: activeSession.duration,
-      breakDuration: activeSession.breakDuration,
-      thingsNotToDo: activeSession.thingsNotToDo,
-      closingRitual: activeSession.closingRitual,
-      closingRitualCompleted: true,
-      totalCycles: activeSession.cycles || 1,
-      distractionDump: distractionDump
-    };
-
-    saveSession(sessionRecord);
-    setHistory(getHistory()); // Refresh history logs
-
+    saveSession(sessionRecord({ closingRitualCompleted: true }));
+    setHistory(getHistory());
     setScreen('SETUP');
     setActiveSession(null);
-  };
-
-  // Break timer reaches 0
-  const handleBreakFinished = () => {
-    // Play a friendly finish chime
-    playPreview(settings.soundType);
-    
-    // Auto-pause and wait for user to click play for the next work cycle
-    setTimeLeft(activeSession.duration * 60);
-    setIsPaused(true);
-    setCurrentCycle(prev => prev + 1);
-    setScreen('ACTIVE');
-  };
-
-  const handleSkipBreak = () => {
-    handleBreakFinished();
-  };
-
-  const handleCancelSession = () => {
-    setIsPaused(true);
-    setShowInterruptModal(true);
   };
 
   const submitInterruption = (reason) => {
-    const sessionRecord = {
-      outcome: activeSession.outcome,
-      workspaceRating: activeSession.workspaceRating,
-      distractions: activeSession.distractions,
-      activationRitual: activeSession.activationRitual,
-      energyRating: activeSession.energyRating,
-      duration: activeSession.duration,
-      breakDuration: activeSession.breakDuration,
-      thingsNotToDo: activeSession.thingsNotToDo,
-      closingRitual: activeSession.closingRitual,
-      closingRitualCompleted: false,
+    stopAlarm();
+    saveSession(sessionRecord({
       interrupted: true,
       interruptionReason: reason,
-      totalCycles: activeSession.cycles || 1,
-      distractionDump: distractionDump
-    };
-    saveSession(sessionRecord);
+      interruptedAt: new Date().toISOString(),
+    }));
     setHistory(getHistory());
-    
     setShowInterruptModal(false);
     setScreen('SETUP');
     setActiveSession(null);
   };
 
-  const resumeFromInterruptPrompt = () => {
-    setShowInterruptModal(false);
-    setIsPaused(false);
-  };
-
-  const handleSkipBreakEarly = () => {
-    handleBreakFinished();
-  };
-
-  // Settings & History actions
   const handleUpdateSettings = (newSettings) => {
     setSettings(newSettings);
     saveSettings(newSettings);
@@ -354,20 +333,14 @@ export default function App() {
     setHistory([]);
   };
 
-  const handleDeleteHistoryItem = (id) => {
-    const updated = deleteSession(id);
-    setHistory(updated);
-  };
-
   const handleCloseAppWindow = () => {
-    if (window.api && window.api.hideWindow) {
+    if (window.api?.hideWindow) {
       window.api.hideWindow();
     }
   };
 
   return (
     <div className="app-container">
-      {/* Top Header */}
       <header className="app-header">
         <div className="logo-section">
           <div className="logo-dot"></div>
@@ -385,7 +358,7 @@ export default function App() {
             <>
               <button
                 className="icon-btn"
-                onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+                onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
                 title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
                 aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
               >
@@ -394,9 +367,9 @@ export default function App() {
               <button
                 className={`icon-btn ${isHistoryOpen ? 'active' : ''}`}
                 onClick={() => {
-                  setIsHistoryOpen(!isHistoryOpen);
-                  setIsSettingsOpen(false);
-                  setIsDailyReviewOpen(false);
+                  const nextOpen = !isHistoryOpen;
+                  closePanels();
+                  setIsHistoryOpen(nextOpen);
                 }}
                 title="History Log"
                 aria-label="History Log"
@@ -406,96 +379,60 @@ export default function App() {
               <button
                 className={`icon-btn ${isDailyReviewOpen ? 'active' : ''}`}
                 onClick={() => {
-                  setIsDailyReviewOpen(!isDailyReviewOpen);
-                  setIsHistoryOpen(false);
-                  setIsSettingsOpen(false);
+                  const nextOpen = !isDailyReviewOpen;
+                  closePanels();
+                  setIsDailyReviewOpen(nextOpen);
                 }}
                 title="Daily Review"
+                aria-label="Daily Review"
               >
-                <span style={{ fontSize: '12px', fontWeight: 600, padding: '0 4px' }}>Review</span>
+                <ClipboardList size={16} />
               </button>
               <button
                 className={`icon-btn ${isSettingsOpen ? 'active' : ''}`}
                 onClick={() => {
-                  setIsSettingsOpen(!isSettingsOpen);
-                  setIsHistoryOpen(false);
-                  setIsDailyReviewOpen(false);
+                  const nextOpen = !isSettingsOpen;
+                  closePanels();
+                  setIsSettingsOpen(nextOpen);
                 }}
                 title="Settings"
+                aria-label="Settings"
               >
                 <Settings size={16} />
               </button>
             </>
           )}
 
-          <button className="icon-btn" onClick={handleCloseAppWindow} title="Close Window">
+          <button className="icon-btn" onClick={handleCloseAppWindow} title="Close Window" aria-label="Close Window">
             <X size={16} />
           </button>
         </div>
       </header>
 
-      {/* Main Screen Router */}
       <div className="scrollable-content">
         {screen === 'SETUP' && updateInfo && (
-          <div className="update-banner-card" style={{
-            backgroundColor: 'rgba(63, 197, 189, 0.08)',
-            border: '1px solid rgba(63, 197, 189, 0.25)',
-            borderRadius: '12px',
-            padding: '12px 16px',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            animation: 'fadeIn 0.5s ease'
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-accent-break)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'var(--color-accent-break)', borderRadius: '50%' }}></span>
-                Update Available!
+          <div className="update-banner-card">
+            <div>
+              <div className="update-banner-title">
+                <span></span>
+                Update Available
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                Version {updateInfo.version} is ready to download.
-              </p>
+              <p>Version {updateInfo.version} is ready to download.</p>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => window.api.openUpdateLink(updateInfo.url)}
-                style={{
-                  background: 'linear-gradient(135deg, var(--color-accent-break), var(--color-accent-break-2))',
-                  border: 'none',
-                  color: '#fff',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px var(--color-accent-break-glow)'
-                }}
-              >
+            <div className="update-banner-actions">
+              <button type="button" className="btn-small-accent" onClick={() => window.api.openUpdateLink(updateInfo.url)}>
                 Get
               </button>
-              <button
-                onClick={() => setUpdateInfo(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--color-text-muted)',
-                  cursor: 'pointer',
-                  padding: '4px'
-                }}
-              >
+              <button type="button" className="icon-btn" onClick={() => setUpdateInfo(null)} aria-label="Dismiss update">
                 <X size={14} />
               </button>
             </div>
           </div>
         )}
 
-        {screen === 'SETUP' && (
-          <SetupForm initialData={lastConfig} onSubmit={handleStartSession} />
-        )}
+        {screen === 'SETUP' && <SetupForm initialData={lastConfig} onSubmit={handleStartSession} />}
 
-        {screen === 'ACTIVE' && (
+        {screen === 'ACTIVE' && activeSession && (
           <Timer
             timeLeft={timeLeft}
             duration={activeSession.duration}
@@ -503,14 +440,15 @@ export default function App() {
             thingsNotToDo={activeSession.thingsNotToDo}
             activationRitual={activeSession.activationRitual}
             isPaused={isPaused}
-            onTogglePause={() => setIsPaused(!isPaused)}
-            onCancel={handleCancelSession}
+            onTogglePause={() => setIsPaused((paused) => !paused)}
+            onCancel={() => {
+              setIsPaused(true);
+              setShowInterruptModal(true);
+            }}
             completedActivationItems={completedActivationItems}
-            onToggleActivationItem={handleToggleActivationItem}
-            completedAvoidItems={completedAvoidItems}
-            onToggleAvoidItem={handleToggleAvoidItem}
+            onToggleActivationItem={(item) => toggleItem(setCompletedActivationItems, item)}
             completedOutcomes={completedOutcomes}
-            onToggleOutcome={handleToggleOutcome}
+            onToggleOutcome={(item) => toggleItem(setCompletedOutcomes, item)}
             currentCycle={currentCycle}
             totalCycles={activeSession.cycles || 1}
             distractionDump={distractionDump}
@@ -518,40 +456,42 @@ export default function App() {
           />
         )}
 
-        {screen === 'CLOSING' && (
-          <ClosingRitual
-            closingRitualText={activeSession.closingRitual}
-            onComplete={handleClosingCompleted}
-            onMuteAlarm={() => {}}
-          />
+        {screen === 'CLOSING' && activeSession && (
+          <ClosingRitual closingRitualText={activeSession.closingRitual} onComplete={handleClosingCompleted} />
         )}
 
-        {screen === 'BREAK' && (
+        {screen === 'BREAK' && activeSession && (
           <BreakTimer
             timeLeft={timeLeft}
-            duration={activeSession.breakDuration}
-            onSkip={handleSkipBreakEarly}
-            isLongBreak={false}
+            duration={currentBreakDuration || activeSession.breakDuration}
+            onSkip={finishBreak}
+            isLongBreak={currentBreakIsLong}
             strictBreakMode={settings.strictBreakMode}
           />
         )}
       </div>
 
-      {/* Sliding Side-Panels */}
       {showInterruptModal && (
-        <div className="overlay-panel open" style={{ zIndex: 100 }}>
+        <div className="overlay-panel open interrupt-panel">
           <div className="overlay-header">
             <h3 className="overlay-title">Interrupt Session?</h3>
           </div>
-          <div className="overlay-content" style={{ padding: '24px', textAlign: 'center' }}>
-            <p style={{ marginBottom: '20px', color: 'var(--color-text-muted)' }}>Why are you stopping early?</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {['Finished Early', 'External Distraction', 'Internal Distraction', 'Emergency', 'Other'].map(r => (
-                <button key={r} type="button" className="btn-secondary" onClick={() => submitInterruption(r)} style={{ padding: '12px' }}>
-                  {r}
+          <div className="overlay-content interrupt-content">
+            <p>Why are you stopping early?</p>
+            <div className="interrupt-actions">
+              {['Finished Early', 'External Distraction', 'Internal Distraction', 'Emergency', 'Other'].map((reason) => (
+                <button key={reason} type="button" className="btn-secondary" onClick={() => submitInterruption(reason)}>
+                  {reason}
                 </button>
               ))}
-              <button type="button" className="btn-primary" onClick={resumeFromInterruptPrompt} style={{ marginTop: '12px', background: 'linear-gradient(135deg, var(--color-accent-work), var(--color-accent-work-2))' }}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setShowInterruptModal(false);
+                  setIsPaused(false);
+                }}
+              >
                 Resume Working
               </button>
             </div>
@@ -563,9 +503,8 @@ export default function App() {
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
         history={history}
-        onDeleteItem={handleDeleteHistoryItem}
+        onDeleteItem={(id) => setHistory(deleteSession(id))}
       />
-
       <SettingsPanel
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -573,11 +512,7 @@ export default function App() {
         onUpdateSettings={handleUpdateSettings}
         onClearHistory={handleClearHistory}
       />
-      
-      <DailyReviewPanel
-        isOpen={isDailyReviewOpen}
-        onClose={() => setIsDailyReviewOpen(false)}
-      />
+      <DailyReviewPanel isOpen={isDailyReviewOpen} onClose={() => setIsDailyReviewOpen(false)} />
     </div>
   );
 }
