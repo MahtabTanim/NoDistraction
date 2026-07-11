@@ -271,7 +271,6 @@ export default function App() {
     setTimeLeft(config.duration * 60);
     setIsPaused(false);
     setCompletedActivationItems([]);
-    setCompletedAvoidItems([]);
     setCompletedOutcomes([]);
     setCurrentCycle(1);
     setCurrentBreakDuration(config.breakDuration);
