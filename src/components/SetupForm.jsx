@@ -29,6 +29,8 @@ export default function SetupForm({ initialData, onSubmit }) {
       setFormData((prev) => ({ ...prev, preset, duration: 90, breakDuration: 20, cycles: 1 }));
     } else if (preset === 'extended') {
       setFormData((prev) => ({ ...prev, preset, duration: 40, breakDuration: 10, cycles: 3 }));
+    } else if (preset === 'deep') {
+      setFormData((prev) => ({ ...prev, preset, duration: 50, breakDuration: 10, cycles: 3 }));
     } else {
       setFormData((prev) => ({ ...prev, preset }));
     }
@@ -88,6 +90,7 @@ export default function SetupForm({ initialData, onSubmit }) {
           <option value="standard">Standard (4x 25m/5m)</option>
           <option value="focus">Focus Protocol (1x 90m/20m)</option>
           <option value="extended">Extended Protocol (3x 40m/10m)</option>
+          <option value="deep">Deep Work Protocol (3x 50m/10m)</option>
         </select>
       </div>
 
